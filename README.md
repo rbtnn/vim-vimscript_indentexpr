@@ -9,7 +9,7 @@ This plugin provides to format Vim script's codes.
 
 ## Why I create this
 
-Writing a Vim script, I use `gg=G` to format the codes as follows:
+1. Writing a Vim script, I use `gg=G` to format the codes as follows:
 
 ```
 autocmd FileType vim
@@ -31,7 +31,9 @@ autocmd FileType vim
         \ | endif
 ```
 
-And `gg=G` is that cursor position is not keeping.
+2. `gg=G` is that cursor position is not keeping.
+
+3. `gg=G` is that heredoc is not keeping.
 
 ## Installation
 
