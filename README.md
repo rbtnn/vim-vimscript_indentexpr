@@ -49,7 +49,7 @@ Format Vim script codes. This command fix issues of [Why I create this](https://
 ### g:vimscript_formatter_replace_indentexpr
 When `g:vimscript_formatter_replace_indentexpr` is non-zero, set `&indentexpr` in a buffer that `&filetype` is vim.  
 When `g:vimscript_formatter_replace_indentexpr` is zero, does not set `&indentexpr` in a buffer that `&filetype` is vim.  
-This variable most be set before loading this plugin.
+This variable must be set before loading this plugin.
 
 ## Concepts
 * This plugin supports Vim and Neovim.
