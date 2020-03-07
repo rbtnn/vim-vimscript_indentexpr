@@ -43,71 +43,123 @@ function! vimscript_formatter#run_tests() abort
 
     call vimscript_formatter#internal#run_tests()
 
-    let lines = [
+    call s:run_test([
         \ 'try',
+        \ 'echo 12',
+        \ 'catch',
+        \ 'echo 12',
+        \ 'finally',
+        \ 'echo 12',
+        \ 'endtry',
+        \ 'try',
+        \ 'catch',
+        \ 'finally',
+        \ 'endtry',
+        \ ], [
+        \ 'try',
+        \ '    echo 12',
+        \ 'catch',
+        \ '    echo 12',
+        \ 'finally',
+        \ '    echo 12',
+        \ 'endtry',
+        \ 'try',
+        \ 'catch',
+        \ 'finally',
+        \ 'endtry',
+        \ ])
+
+    call s:run_test([
         \ 'if 1',
+        \ 'echo 12',
+        \ 'elseif 2',
+        \ 'echo 12',
+        \ 'else',
+        \ 'echo 12',
+        \ 'endif',
+        \ 'if 1',
+        \ 'elseif 2',
+        \ 'else',
+        \ 'endif',
+        \ ], [
+        \ 'if 1',
+        \ '    echo 12',
+        \ 'elseif 2',
+        \ '    echo 12',
+        \ 'else',
+        \ '    echo 12',
+        \ 'endif',
+        \ 'if 1',
+        \ 'elseif 2',
+        \ 'else',
+        \ 'endif',
+        \ ])
+
+    call s:run_test([
         \ 'while 1',
         \ 'echo 12',
-        \ 'for i in [1,2,3]',
-        \ 'echo 23',
-        \ 'endfor',
         \ 'endwhile',
-        \ 'echo 34',
-        \ 'endif',
-        \ 'catch',
-        \ 'echo 45',
-        \ 'finally',
-        \ 'echo 56',
-        \ 'endtry',
+        \ 'while 1',
+        \ 'endwhile',
+        \ ], [
+        \ 'while 1',
+        \ '    echo 12',
+        \ 'endwhile',
+        \ 'while 1',
+        \ 'endwhile',
+        \ ])
+
+    call s:run_test([
+        \ 'for i in [1,2,3]',
+        \ 'echo 12',
+        \ 'endfor',
+        \ 'for i in [1,2,3]',
+        \ 'endfor',
+        \ ], [
+        \ 'for i in [1,2,3]',
+        \ '    echo 12',
+        \ 'endfor',
+        \ 'for i in [1,2,3]',
+        \ 'endfor',
+        \ ])
+
+    call s:run_test([
+        \ 'def xxx',
+        \ 'echo 12',
+        \ 'enddef',
+        \ 'def xxx',
+        \ 'enddef',
+        \ ], [
+        \ 'def xxx',
+        \ '    echo 12',
+        \ 'enddef',
+        \ 'def xxx',
+        \ 'enddef',
+        \ ])
+
+    call s:run_test([
         \ 'augroup xxx',
         \ 'autocmd!',
         \ 'autocmd FileType vim',
-        \ '    \ : if 1',
-        \ '    \ |     echo 67',
-        \ '    \ | else',
-        \ '    \ |     echo 78',
-        \ '    \ | endif',
+        \ '\ : if 1',
+        \ '\ |     echo 12',
+        \ '\ | else',
+        \ '\ |     echo 12',
+        \ '\ | endif',
         \ 'augroup END',
-        \ ]
-
-    try
-        new
-        setlocal filetype=vim
-        let lnum = 0
-        for line in lines
-            let lnum += 1
-            call setbufline(bufnr(), lnum, line)
-        endfor
-        VimscriptFormatter
-        let formatted_lines = getbufline('%', 1, '$')
-    finally
-        bdelete!
-    endtry
-
-    call assert_equal(formatted_lines, [
-        \ 'try',
-        \ '    while 1',
-        \ '        echo 12',
-        \ '        for i in [1,2,3]',
-        \ '            echo 23',
-        \ '        endfor',
-        \ '    endwhile',
-        \ '    if 1',
-        \ '        echo 34',
-        \ '    endif',
-        \ 'catch',
-        \ '    echo 45',
-        \ 'finally',
-        \ '    echo 56',
-        \ 'endtry',
+        \ 'augroup xxx',
+        \ 'augroup END',
+        \ ], [
         \ 'augroup xxx',
         \ '    autocmd!',
         \ '    autocmd FileType vim',
         \ '        \ : if 1',
-        \ '        \ |     echo 76',
+        \ '        \ |     echo 12',
         \ '        \ | else',
-        \ '        \ |     echo 78',
+        \ '        \ |     echo 12',
         \ '        \ | endif',
+        \ 'augroup END',
+        \ 'augroup xxx',
         \ 'augroup END',
         \ ])
 
@@ -119,5 +171,22 @@ function! vimscript_formatter#run_tests() abort
             echohl None
         endfor
     endif
+endfunction
+
+function! s:run_test(actual, expect) abort
+    try
+        new
+        setlocal filetype=vim
+        let lnum = 0
+        for line in a:actual
+            let lnum += 1
+            call setbufline(bufnr(), lnum, line)
+        endfor
+        VimscriptFormatter
+        let formatted_lines = getbufline('%', 1, '$')
+    finally
+        bdelete!
+    endtry
+    call assert_equal(formatted_lines, a:expect)
 endfunction
 

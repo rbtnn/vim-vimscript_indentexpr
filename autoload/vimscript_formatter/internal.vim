@@ -18,6 +18,8 @@ let s:TYPE_TRY = 'TYPE_TRY'
 let s:TYPE_CATCH = 'TYPE_CATCH'
 let s:TYPE_FINALLY = 'TYPE_FINALLY'
 let s:TYPE_ENDTRY = 'TYPE_ENDTRY'
+let s:TYPE_DEF = 'TYPE_DEF'
+let s:TYPE_ENDDEF = 'TYPE_ENDDEF'
 
 function! vimscript_formatter#internal#parse(line) abort
     let text = matchstr(a:line, '^\s*\zs\S.*$')
@@ -58,6 +60,10 @@ function! vimscript_formatter#internal#parse(line) abort
         let type = s:TYPE_FINALLY
     elseif text =~# '^\<endt\%[ry\]\>'
         let type = s:TYPE_ENDTRY
+    elseif text =~# '^\<enddef\>'
+        let type = s:TYPE_ENDDEF
+    elseif text =~# '^\<def\>'
+        let type = s:TYPE_DEF
     else
         let type = type
     endif
@@ -84,9 +90,10 @@ function! vimscript_formatter#internal#indentexpr() abort
         endif
     endif
 
-    if (s:TYPE_FUNCTION == prev_parsed['type']) ||
+    let prev = (s:TYPE_FUNCTION == prev_parsed['type']) ||
         \ (s:TYPE_AUGROUP == prev_parsed['type']) ||
         \ (s:TYPE_WHILE == prev_parsed['type']) ||
+        \ (s:TYPE_DEF == prev_parsed['type']) ||
         \ (s:TYPE_FOR == prev_parsed['type']) ||
         \ (s:TYPE_TRY == prev_parsed['type']) ||
         \ (s:TYPE_FINALLY == prev_parsed['type']) ||
@@ -94,12 +101,11 @@ function! vimscript_formatter#internal#indentexpr() abort
         \ (s:TYPE_IF == prev_parsed['type']) ||
         \ (s:TYPE_ELSE == prev_parsed['type']) ||
         \ (s:TYPE_ELSEIF == prev_parsed['type'])
-        return prev_ind + shiftwidth()
-    endif
 
-    if (s:TYPE_ENDFUNCTION == curr_parsed['type']) ||
+    let curr = (s:TYPE_ENDFUNCTION == curr_parsed['type']) ||
         \ (s:TYPE_ENDAUGROUP == curr_parsed['type']) ||
         \ (s:TYPE_ENDWHILE == curr_parsed['type']) ||
+        \ (s:TYPE_ENDDEF == curr_parsed['type']) ||
         \ (s:TYPE_ENDFOR == curr_parsed['type']) ||
         \ (s:TYPE_FINALLY == curr_parsed['type']) ||
         \ (s:TYPE_CATCH == curr_parsed['type']) ||
@@ -107,10 +113,20 @@ function! vimscript_formatter#internal#indentexpr() abort
         \ (s:TYPE_ENDIF == curr_parsed['type']) ||
         \ (s:TYPE_ELSE == curr_parsed['type']) ||
         \ (s:TYPE_ELSEIF == curr_parsed['type'])
-        return prev_ind - shiftwidth()
-    endif
 
-    return prev_ind
+    if prev
+        if curr
+            return prev_ind
+        else
+            return prev_ind + shiftwidth()
+        endif
+    else
+        if curr
+            return prev_ind - shiftwidth()
+        else
+            return prev_ind
+        endif
+    endif
 endfunction
 
 function! vimscript_formatter#internal#run_tests() abort
@@ -143,6 +159,8 @@ function! vimscript_formatter#internal#run_tests() abort
     call assert_equal(vimscript_formatter#internal#parse('   catch'), { 'type' : s:TYPE_CATCH, 'text' : 'catch', })
     call assert_equal(vimscript_formatter#internal#parse('   finally'), { 'type' : s:TYPE_FINALLY, 'text' : 'finally', })
     call assert_equal(vimscript_formatter#internal#parse('   endtry'), { 'type' : s:TYPE_ENDTRY, 'text' : 'endtry', })
+    call assert_equal(vimscript_formatter#internal#parse('   def'), { 'type' : s:TYPE_DEF, 'text' : 'def', })
+    call assert_equal(vimscript_formatter#internal#parse('   enddef'), { 'type' : s:TYPE_ENDDEF, 'text' : 'enddef', })
 endfunction
 
 "call vimscript_formatter#run_tests()
