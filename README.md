@@ -46,7 +46,7 @@ Plug 'rbtnn/vim-vimscript_formatter'
 ### :VimscriptFormatter
 Format Vim script codes. This command fix issues of [Why I create this](https://github.com/rbtnn/vim-vimscript_formatter#why-i-create-this).
 
-### g:vimscript_formatter_replace_indentexpr
+### g:vimscript_formatter_replace_indentexpr (default: 1)
 When `g:vimscript_formatter_replace_indentexpr` is non-zero, set `&indentexpr` in a buffer that `&filetype` is vim.  
 When `g:vimscript_formatter_replace_indentexpr` is zero, does not set `&indentexpr` in a buffer that `&filetype` is vim.  
 This variable must be set before loading this plugin.
