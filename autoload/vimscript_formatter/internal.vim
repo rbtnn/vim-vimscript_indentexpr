@@ -70,61 +70,83 @@ function! vimscript_formatter#internal#parse(line) abort
     return { 'type' : type, 'text' : text, }
 endfunction
 
+function! vimscript_formatter#internal#prev(lnum) abort
+    let prev_lnum = prevnonblank(a:lnum - 1)
+    while (-1 != index(['vimLetHereDoc', 'vimLetHereDocStop'], synIDattr(synID(prev_lnum, 1, 1), 'name'))) && (1 < prev_lnum)
+        let prev_lnum = prevnonblank(prev_lnum - 1)
+    endwhile
+    let syn_name = synIDattr(synID(prev_lnum, 1, 1), 'name')
+    let line = getline(prev_lnum)
+    let parsed = vimscript_formatter#internal#parse(line)
+    let indent = indent(prev_lnum)
+    return { 'syn_name' : syn_name, 'line' : line, 'parsed' : parsed, 'indent' : indent, }
+endfunction
+
+function! vimscript_formatter#internal#curr(lnum) abort
+    let syn_name = synIDattr(synID(a:lnum, 1, 1), 'name')
+    let line = getline(a:lnum)
+    let parsed = vimscript_formatter#internal#parse(line)
+    return { 'syn_name' : syn_name, 'line' : line, 'parsed' : parsed, }
+endfunction
+
 function! vimscript_formatter#internal#indentexpr() abort
     if 1 == v:lnum
         return 0
     endif
-    let prev_line = getline(prevnonblank(v:lnum - 1))
-    let prev_parsed = vimscript_formatter#internal#parse(prev_line)
-    let prev_ind = indent(prevnonblank(v:lnum - 1))
-    let curr_line = getline(v:lnum)
-    let curr_parsed = vimscript_formatter#internal#parse(curr_line)
+    let prev_info = vimscript_formatter#internal#prev(v:lnum)
+    let curr_info = vimscript_formatter#internal#curr(v:lnum)
 
-    if (s:TYPE_CONTINUOUS == curr_parsed['type'])
-        if (s:TYPE_CONTINUOUS != prev_parsed['type'])
-            let prev_ind += shiftwidth()
+    let indent = prev_info['indent']
+
+    if -1 != index(['vimLetHereDoc', 'vimLetHereDocStop'], curr_info['syn_name'])
+        return -1
+    endif
+
+    if (s:TYPE_CONTINUOUS == curr_info['parsed']['type'])
+        if (s:TYPE_CONTINUOUS != prev_info['parsed']['type'])
+            let indent += shiftwidth()
         endif
     else
-        if (s:TYPE_CONTINUOUS == prev_parsed['type'])
-            let prev_ind -= shiftwidth()
+        if (s:TYPE_CONTINUOUS == prev_info['parsed']['type'])
+            let indent -= shiftwidth()
         endif
     endif
 
-    let prev = (s:TYPE_FUNCTION == prev_parsed['type']) ||
-        \ (s:TYPE_AUGROUP == prev_parsed['type']) ||
-        \ (s:TYPE_WHILE == prev_parsed['type']) ||
-        \ (s:TYPE_DEF == prev_parsed['type']) ||
-        \ (s:TYPE_FOR == prev_parsed['type']) ||
-        \ (s:TYPE_TRY == prev_parsed['type']) ||
-        \ (s:TYPE_FINALLY == prev_parsed['type']) ||
-        \ (s:TYPE_CATCH == prev_parsed['type']) ||
-        \ (s:TYPE_IF == prev_parsed['type']) ||
-        \ (s:TYPE_ELSE == prev_parsed['type']) ||
-        \ (s:TYPE_ELSEIF == prev_parsed['type'])
+    let p = (s:TYPE_FUNCTION == prev_info['parsed']['type']) ||
+        \ (s:TYPE_AUGROUP == prev_info['parsed']['type']) ||
+        \ (s:TYPE_WHILE == prev_info['parsed']['type']) ||
+        \ (s:TYPE_DEF == prev_info['parsed']['type']) ||
+        \ (s:TYPE_FOR == prev_info['parsed']['type']) ||
+        \ (s:TYPE_TRY == prev_info['parsed']['type']) ||
+        \ (s:TYPE_FINALLY == prev_info['parsed']['type']) ||
+        \ (s:TYPE_CATCH == prev_info['parsed']['type']) ||
+        \ (s:TYPE_IF == prev_info['parsed']['type']) ||
+        \ (s:TYPE_ELSE == prev_info['parsed']['type']) ||
+        \ (s:TYPE_ELSEIF == prev_info['parsed']['type'])
 
-    let curr = (s:TYPE_ENDFUNCTION == curr_parsed['type']) ||
-        \ (s:TYPE_ENDAUGROUP == curr_parsed['type']) ||
-        \ (s:TYPE_ENDWHILE == curr_parsed['type']) ||
-        \ (s:TYPE_ENDDEF == curr_parsed['type']) ||
-        \ (s:TYPE_ENDFOR == curr_parsed['type']) ||
-        \ (s:TYPE_FINALLY == curr_parsed['type']) ||
-        \ (s:TYPE_CATCH == curr_parsed['type']) ||
-        \ (s:TYPE_ENDTRY == curr_parsed['type']) ||
-        \ (s:TYPE_ENDIF == curr_parsed['type']) ||
-        \ (s:TYPE_ELSE == curr_parsed['type']) ||
-        \ (s:TYPE_ELSEIF == curr_parsed['type'])
+    let c = (s:TYPE_ENDFUNCTION == curr_info['parsed']['type']) ||
+        \ (s:TYPE_ENDAUGROUP == curr_info['parsed']['type']) ||
+        \ (s:TYPE_ENDWHILE == curr_info['parsed']['type']) ||
+        \ (s:TYPE_ENDDEF == curr_info['parsed']['type']) ||
+        \ (s:TYPE_ENDFOR == curr_info['parsed']['type']) ||
+        \ (s:TYPE_FINALLY == curr_info['parsed']['type']) ||
+        \ (s:TYPE_CATCH == curr_info['parsed']['type']) ||
+        \ (s:TYPE_ENDTRY == curr_info['parsed']['type']) ||
+        \ (s:TYPE_ENDIF == curr_info['parsed']['type']) ||
+        \ (s:TYPE_ELSE == curr_info['parsed']['type']) ||
+        \ (s:TYPE_ELSEIF == curr_info['parsed']['type'])
 
-    if prev
-        if curr
-            return prev_ind
+    if p
+        if c
+            return indent
         else
-            return prev_ind + shiftwidth()
+            return indent + shiftwidth()
         endif
     else
-        if curr
-            return prev_ind - shiftwidth()
+        if c
+            return indent - shiftwidth()
         else
-            return prev_ind
+            return indent
         endif
     endif
 endfunction
@@ -162,6 +184,4 @@ function! vimscript_formatter#internal#run_tests() abort
     call assert_equal(vimscript_formatter#internal#parse('   def'), { 'type' : s:TYPE_DEF, 'text' : 'def', })
     call assert_equal(vimscript_formatter#internal#parse('   enddef'), { 'type' : s:TYPE_ENDDEF, 'text' : 'enddef', })
 endfunction
-
-"call vimscript_formatter#run_tests()
 
