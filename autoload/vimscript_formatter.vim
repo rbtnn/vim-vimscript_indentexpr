@@ -6,7 +6,7 @@ function! vimscript_formatter#exec(q_args) abort
     let w0 = line('w0')
     let saved_indentexpr = &indentexpr
     try
-        call vimscript_formatter#setlocal_indentexpr(1)
+        call vimscript_formatter#setlocal_indentexpr()
         silent! call feedkeys('gg=G', 'nx')
     finally
         let &indentexpr = saved_indentexpr
@@ -19,15 +19,6 @@ endfunction
 
 function! vimscript_formatter#indentexpr() abort
     return vimscript_formatter#internal#indentexpr()
-endfunction
-
-function! vimscript_formatter#setlocal_indentexpr(setting) abort
-    if a:setting
-        runtime! autoload/vimscript_formatter/internal.vim
-        if exists('*vimscript_formatter#internal#indentexpr')
-            setlocal indentexpr=vimscript_formatter#internal#indentexpr()
-        endif
-    endif
 endfunction
 
 function! vimscript_formatter#comp(ArgLead, CmdLine, CursorPos) abort
