@@ -62,7 +62,7 @@ g:vimscript_formatter_replace_indentexpr
 	       	that |'filetype'| is vim.
 		When this variable is zero, does not set |'indentexpr'| in a
 	       	buffer that |'filetype'| is vim.
-		This variable most be set before loading this plugin.
+		This variable must be set before loading this plugin.
 
 
 
