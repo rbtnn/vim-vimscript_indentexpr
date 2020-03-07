@@ -57,7 +57,7 @@ Commands                                          *vimscript_formatter-commands*
 Variables                                        *vimscript_formatter-variables*
 
                                       *g:vimscript_formatter_replace_indentexpr*
-g:vimscript_formatter_replace_indentexpr
+g:vimscript_formatter_replace_indentexpr (default: 1)
 		When this variable is non-zero, set |'indentexpr'| in a buffer
 	       	that |'filetype'| is vim.
 		When this variable is zero, does not set |'indentexpr'| in a
