@@ -1,5 +1,6 @@
 
 let s:TYPE_NORMAL = 'TYPE_NORMAL'
+let s:TYPE_ONELINER = 'TYPE_ONELINER'
 let s:TYPE_COMMENT = 'TYPE_COMMENT'
 let s:TYPE_CONTINUOUS = 'TYPE_CONTINUOUS'
 let s:TYPE_IF = 'TYPE_IF'
@@ -28,6 +29,14 @@ function! vimscript_formatter#internal#parse(line) abort
         let type = s:TYPE_COMMENT
     elseif text =~# '^\\'
         let type = s:TYPE_CONTINUOUS
+    elseif text =~# '^\<if\>.*\<endi\%[f\]\>$'
+        let type = s:TYPE_ONELINER
+    elseif text =~# '^\<wh\%[ile\]\>.*\<endw\%[hile\]\>$'
+        let type = s:TYPE_ONELINER
+    elseif text =~# '^\<for\>.*\<endfo\%[r\]\>$'
+        let type = s:TYPE_ONELINER
+    elseif text =~# '^\<try\>.*\<endt\%[ry\]\>$'
+        let type = s:TYPE_ONELINER
     elseif text =~# '^\<if\>'
         let type = s:TYPE_IF
     elseif text =~# '^\<elsei\%[f\]\>'
@@ -67,7 +76,7 @@ function! vimscript_formatter#internal#parse(line) abort
     else
         let type = type
     endif
-    return { 'type' : type, 'text' : text, }
+    return { 'type' : type, }
 endfunction
 
 function! vimscript_formatter#internal#prev(lnum) abort
@@ -152,36 +161,40 @@ function! vimscript_formatter#internal#indentexpr() abort
 endfunction
 
 function! vimscript_formatter#internal#run_tests() abort
-    call assert_equal(vimscript_formatter#internal#parse('   "en'), { 'type' : s:TYPE_COMMENT, 'text' : '"en', })
-    call assert_equal(vimscript_formatter#internal#parse('   \en'), { 'type' : s:TYPE_CONTINUOUS, 'text' : '\en', })
-    call assert_equal(vimscript_formatter#internal#parse('   if v:true'), { 'type' : s:TYPE_IF, 'text' : 'if v:true', })
-    call assert_equal(vimscript_formatter#internal#parse('   elseif v:true'), { 'type' : s:TYPE_ELSEIF, 'text' : 'elseif v:true', })
-    call assert_equal(vimscript_formatter#internal#parse('   elsei v:true'), { 'type' : s:TYPE_ELSEIF, 'text' : 'elsei v:true', })
-    call assert_equal(vimscript_formatter#internal#parse('   else'), { 'type' : s:TYPE_ELSE, 'text' : 'else', })
-    call assert_equal(vimscript_formatter#internal#parse('   el'), { 'type' : s:TYPE_ELSE, 'text' : 'el', })
-    call assert_equal(vimscript_formatter#internal#parse('   endif'), { 'type' : s:TYPE_ENDIF, 'text' : 'endif', })
-    call assert_equal(vimscript_formatter#internal#parse('   en'), { 'type' : s:TYPE_ENDIF, 'text' : 'en', })
-    call assert_equal(vimscript_formatter#internal#parse('   for'), { 'type' : s:TYPE_FOR, 'text' : 'for', })
-    call assert_equal(vimscript_formatter#internal#parse('   endfor'), { 'type' : s:TYPE_ENDFOR, 'text' : 'endfor', })
-    call assert_equal(vimscript_formatter#internal#parse('   endfo'), { 'type' : s:TYPE_ENDFOR, 'text' : 'endfo', })
-    call assert_equal(vimscript_formatter#internal#parse('   function'), { 'type' : s:TYPE_FUNCTION, 'text' : 'function', })
-    call assert_equal(vimscript_formatter#internal#parse('   fu'), { 'type' : s:TYPE_FUNCTION, 'text' : 'fu', })
-    call assert_equal(vimscript_formatter#internal#parse('   endfunction'), { 'type' : s:TYPE_ENDFUNCTION, 'text' : 'endfunction', })
-    call assert_equal(vimscript_formatter#internal#parse('   augroup'), { 'type' : s:TYPE_AUGROUP, 'text' : 'augroup', })
-    call assert_equal(vimscript_formatter#internal#parse('   aug'), { 'type' : s:TYPE_AUGROUP, 'text' : 'aug', })
-    call assert_equal(vimscript_formatter#internal#parse('   augroup end'), { 'type' : s:TYPE_ENDAUGROUP, 'text' : 'augroup end', })
-    call assert_equal(vimscript_formatter#internal#parse('   aug end'), { 'type' : s:TYPE_ENDAUGROUP, 'text' : 'aug end', })
-    call assert_equal(vimscript_formatter#internal#parse('   augroup END'), { 'type' : s:TYPE_ENDAUGROUP, 'text' : 'augroup END', })
-    call assert_equal(vimscript_formatter#internal#parse('   aug END'), { 'type' : s:TYPE_ENDAUGROUP, 'text' : 'aug END', })
-    call assert_equal(vimscript_formatter#internal#parse('   while v:true'), { 'type' : s:TYPE_WHILE, 'text' : 'while v:true', })
-    call assert_equal(vimscript_formatter#internal#parse('   wh v:true'), { 'type' : s:TYPE_WHILE, 'text' : 'wh v:true', })
-    call assert_equal(vimscript_formatter#internal#parse('   endwhile'), { 'type' : s:TYPE_ENDWHILE, 'text' : 'endwhile', })
-    call assert_equal(vimscript_formatter#internal#parse('   endw'), { 'type' : s:TYPE_ENDWHILE, 'text' : 'endw', })
-    call assert_equal(vimscript_formatter#internal#parse('   try'), { 'type' : s:TYPE_TRY, 'text' : 'try', })
-    call assert_equal(vimscript_formatter#internal#parse('   catch'), { 'type' : s:TYPE_CATCH, 'text' : 'catch', })
-    call assert_equal(vimscript_formatter#internal#parse('   finally'), { 'type' : s:TYPE_FINALLY, 'text' : 'finally', })
-    call assert_equal(vimscript_formatter#internal#parse('   endtry'), { 'type' : s:TYPE_ENDTRY, 'text' : 'endtry', })
-    call assert_equal(vimscript_formatter#internal#parse('   def'), { 'type' : s:TYPE_DEF, 'text' : 'def', })
-    call assert_equal(vimscript_formatter#internal#parse('   enddef'), { 'type' : s:TYPE_ENDDEF, 'text' : 'enddef', })
+    call assert_equal(vimscript_formatter#internal#parse('   if v:true | endif'), { 'type' : s:TYPE_ONELINER, })
+    call assert_equal(vimscript_formatter#internal#parse('   for i in [1,2,3] | endfor'), { 'type' : s:TYPE_ONELINER, })
+    call assert_equal(vimscript_formatter#internal#parse('   while v:true | endwhile'), { 'type' : s:TYPE_ONELINER, })
+    call assert_equal(vimscript_formatter#internal#parse('   try | catch | endtry'), { 'type' : s:TYPE_ONELINER, })
+    call assert_equal(vimscript_formatter#internal#parse('   "en'), { 'type' : s:TYPE_COMMENT, })
+    call assert_equal(vimscript_formatter#internal#parse('   \en'), { 'type' : s:TYPE_CONTINUOUS, })
+    call assert_equal(vimscript_formatter#internal#parse('   if v:true'), { 'type' : s:TYPE_IF, })
+    call assert_equal(vimscript_formatter#internal#parse('   elseif v:true'), { 'type' : s:TYPE_ELSEIF, })
+    call assert_equal(vimscript_formatter#internal#parse('   elsei v:true'), { 'type' : s:TYPE_ELSEIF, })
+    call assert_equal(vimscript_formatter#internal#parse('   else'), { 'type' : s:TYPE_ELSE, })
+    call assert_equal(vimscript_formatter#internal#parse('   el'), { 'type' : s:TYPE_ELSE, })
+    call assert_equal(vimscript_formatter#internal#parse('   endif'), { 'type' : s:TYPE_ENDIF, })
+    call assert_equal(vimscript_formatter#internal#parse('   en'), { 'type' : s:TYPE_ENDIF, })
+    call assert_equal(vimscript_formatter#internal#parse('   for'), { 'type' : s:TYPE_FOR, })
+    call assert_equal(vimscript_formatter#internal#parse('   endfor'), { 'type' : s:TYPE_ENDFOR, })
+    call assert_equal(vimscript_formatter#internal#parse('   endfo'), { 'type' : s:TYPE_ENDFOR, })
+    call assert_equal(vimscript_formatter#internal#parse('   function'), { 'type' : s:TYPE_FUNCTION, })
+    call assert_equal(vimscript_formatter#internal#parse('   fu'), { 'type' : s:TYPE_FUNCTION, })
+    call assert_equal(vimscript_formatter#internal#parse('   endfunction'), { 'type' : s:TYPE_ENDFUNCTION, })
+    call assert_equal(vimscript_formatter#internal#parse('   augroup'), { 'type' : s:TYPE_AUGROUP, })
+    call assert_equal(vimscript_formatter#internal#parse('   aug'), { 'type' : s:TYPE_AUGROUP, })
+    call assert_equal(vimscript_formatter#internal#parse('   augroup end'), { 'type' : s:TYPE_ENDAUGROUP, })
+    call assert_equal(vimscript_formatter#internal#parse('   aug end'), { 'type' : s:TYPE_ENDAUGROUP, })
+    call assert_equal(vimscript_formatter#internal#parse('   augroup END'), { 'type' : s:TYPE_ENDAUGROUP, })
+    call assert_equal(vimscript_formatter#internal#parse('   aug END'), { 'type' : s:TYPE_ENDAUGROUP, })
+    call assert_equal(vimscript_formatter#internal#parse('   while v:true'), { 'type' : s:TYPE_WHILE, })
+    call assert_equal(vimscript_formatter#internal#parse('   wh v:true'), { 'type' : s:TYPE_WHILE, })
+    call assert_equal(vimscript_formatter#internal#parse('   endwhile'), { 'type' : s:TYPE_ENDWHILE, })
+    call assert_equal(vimscript_formatter#internal#parse('   endw'), { 'type' : s:TYPE_ENDWHILE, })
+    call assert_equal(vimscript_formatter#internal#parse('   try'), { 'type' : s:TYPE_TRY, })
+    call assert_equal(vimscript_formatter#internal#parse('   catch'), { 'type' : s:TYPE_CATCH, })
+    call assert_equal(vimscript_formatter#internal#parse('   finally'), { 'type' : s:TYPE_FINALLY, })
+    call assert_equal(vimscript_formatter#internal#parse('   endtry'), { 'type' : s:TYPE_ENDTRY, })
+    call assert_equal(vimscript_formatter#internal#parse('   def'), { 'type' : s:TYPE_DEF, })
+    call assert_equal(vimscript_formatter#internal#parse('   enddef'), { 'type' : s:TYPE_ENDDEF, })
 endfunction
 
