@@ -2,8 +2,7 @@
 let s:TEST_LOG = expand('<sfile>:h:h:gs?\?/?') . '/test.log'
 
 function! vimscript_formatter#exec(q_args) abort
-    let pos = getpos('.')
-    let w0 = line('w0')
+    let view = winsaveview()
     let saved_indentexpr = &indentexpr
     try
         setlocal indentexpr=vimscript_formatter#internal#indentexpr()
@@ -11,10 +10,7 @@ function! vimscript_formatter#exec(q_args) abort
     finally
         let &indentexpr = saved_indentexpr
     endtry
-    " for keeping the top position of current window.
-    execute printf('%d', w0)
-    call feedkeys("z\<cr>", 'xn')
-    call setpos('.', pos)
+    call winrestview(view)
 endfunction
 
 function! vimscript_formatter#comp(ArgLead, CmdLine, CursorPos) abort
