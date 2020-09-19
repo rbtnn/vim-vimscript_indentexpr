@@ -1,8 +1,8 @@
 
-# vim-vimscript_formatter
+# vim-vimscript_indentexpr
 
-[![vim](https://github.com/rbtnn/vim-vimscript_formatter/workflows/vim/badge.svg)](https://github.com/rbtnn/vim-vimscript_formatter/actions?query=workflow%3Avim)
-[![neovim](https://github.com/rbtnn/vim-vimscript_formatter/workflows/neovim/badge.svg)](https://github.com/rbtnn/vim-vimscript_formatter/actions?query=workflow%3Aneovim)
+[![vim](https://github.com/rbtnn/vim-vimscript_indentexpr/workflows/vim/badge.svg)](https://github.com/rbtnn/vim-vimscript_indentexpr/actions?query=workflow%3Avim)
+[![neovim](https://github.com/rbtnn/vim-vimscript_indentexpr/workflows/neovim/badge.svg)](https://github.com/rbtnn/vim-vimscript_indentexpr/actions?query=workflow%3Aneovim)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 This plugin provides to format Vim script's codes.
@@ -40,7 +40,7 @@ autocmd FileType vim
 This is an example of installation using [vim-plug](https://github.com/junegunn/vim-plug).
 
 ```
-Plug 'rbtnn/vim-vimscript_formatter'
+Plug 'rbtnn/vim-vimscript_indentexpr'
 ```
 
 ## Concepts
