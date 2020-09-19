@@ -15,6 +15,6 @@ jobs:
       - name: Run unit tests
         run: |
           vim --version
-          vim -u NONE -N --noplugin -c "set rtp+=." -c "call vimscript_formatter#run_tests()" -c "qa!"
+          vim -u NONE -N --noplugin -c "set rtp+=." -c "call vimscript_indentexpr#run_tests()" -c "qa!"
           if test -f test.log; then exit 1; fi
 
