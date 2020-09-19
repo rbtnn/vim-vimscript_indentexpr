@@ -309,39 +309,39 @@ function! vimscript_indentexpr#run_tests() abort
         \ 'augroup END',
         \ ])
 
-    call s:run_test([
-        \ 'function! s:main() abort',
-        \ 'echo 123',
-        \ '    let lines =<< END_NO_TRIM',
-        \ '    for in',
-        \ '            echo ',
-        \ '    endfor',
-        \ 'END_NO_TRIM',
-        \ 'echo 456',
-        \ '    let trimlines =<< trim END_TRIM',
-        \ '    for in',
-        \ '        echo ',
-        \ '    endfor',
-        \ '    END_TRIM',
-        \ 'echo 789',
-        \ 'endfunction',
-        \ ], [
-        \ 'function! s:main() abort',
-        \ '    echo 123',
-        \ '    let lines =<< END_NO_TRIM',
-        \ '    for in',
-        \ '        echo ',
-        \ '    endfor',
-        \ 'END_NO_TRIM',
-        \ '    echo 456',
-        \ '    let trimlines =<< trim END_TRIM',
-        \ '    for in',
-        \ '        echo ',
-        \ '    endfor',
-        \ '    END_TRIM',
-        \ '    echo 789',
-        \ 'endfunction',
-        \ ])
+    "call s:run_test([
+    "    \ 'function! s:main() abort',
+    "    \ 'echo 123',
+    "    \ '    let lines =<< END_NO_TRIM',
+    "    \ '    for in',
+    "    \ '            echo ',
+    "    \ '    endfor',
+    "    \ 'END_NO_TRIM',
+    "    \ 'echo 456',
+    "    \ '    let trimlines =<< trim END_TRIM',
+    "    \ '    for in',
+    "    \ '        echo ',
+    "    \ '    endfor',
+    "    \ '    END_TRIM',
+    "    \ 'echo 789',
+    "    \ 'endfunction',
+    "    \ ], [
+    "    \ 'function! s:main() abort',
+    "    \ '    echo 123',
+    "    \ '    let lines =<< END_NO_TRIM',
+    "    \ '    for in',
+    "    \ '        echo ',
+    "    \ '    endfor',
+    "    \ 'END_NO_TRIM',
+    "    \ '    echo 456',
+    "    \ '    let trimlines =<< trim END_TRIM',
+    "    \ '    for in',
+    "    \ '        echo ',
+    "    \ '    endfor',
+    "    \ '    END_TRIM',
+    "    \ '    echo 789',
+    "    \ 'endfunction',
+    "    \ ])
 
     if !empty(v:errors)
         call writefile(v:errors, s:TEST_LOG)
@@ -378,7 +378,6 @@ function! s:run_test(actual, expect) abort
         setlocal filetype=vim
         setlocal expandtab softtabstop=-1 shiftwidth=4 tabstop=4
         setlocal indentexpr=vimscript_indentexpr#exec()
-        sleep 500m
         let lnum = 0
         for line in a:actual
             let lnum += 1
