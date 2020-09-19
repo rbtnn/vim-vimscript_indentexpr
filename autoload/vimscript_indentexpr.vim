@@ -144,6 +144,9 @@ function! vimscript_indentexpr#parse(line) abort
 endfunction
 
 function! vimscript_indentexpr#run_tests() abort
+    syntax on
+    filetype plugin indent on
+
     if filereadable(s:TEST_LOG)
         call delete(s:TEST_LOG)
     endif
@@ -373,6 +376,8 @@ function! s:run_test(actual, expect) abort
     try
         new
         setlocal filetype=vim
+        setlocal expandtab softtabstop=-1 shiftwidth=4 tabstop=4
+        setlocal indentexpr=vimscript_indentexpr#exec()
         let lnum = 0
         for line in a:actual
             let lnum += 1
