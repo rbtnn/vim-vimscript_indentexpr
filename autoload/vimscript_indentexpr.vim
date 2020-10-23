@@ -87,7 +87,7 @@ function! vimscript_indentexpr#exec() abort
 endfunction
 
 function! vimscript_indentexpr#parse(line) abort
-    let text = matchstr(a:line, '^\s*\zs\S.*$')
+    let text = matchstr(a:line, '^\s*\(export\s\+\)\?\zs\S.*$')
     let type = s:TYPE_NORMAL
     if text =~# '^"'
         let type = s:TYPE_COMMENT
