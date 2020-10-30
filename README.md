@@ -31,10 +31,6 @@ autocmd FileType vim
         \ | endif
 ```
 
-2. `gg=G` is that cursor position is not keeping.
-
-3. `gg=G` is that heredoc is not keeping.
-
 ## Installation
 
 This is an example of installation using [vim-plug](https://github.com/junegunn/vim-plug).
