@@ -5,7 +5,7 @@
 [![neovim](https://github.com/rbtnn/vim-vimscript_indentexpr/workflows/neovim/badge.svg)](https://github.com/rbtnn/vim-vimscript_indentexpr/actions?query=workflow%3Aneovim)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-This plugin provides to format Vim script's codes.
+This plugin provides to format legacy Vim script and Vim9 script if possible.
 
 ## Why I create this
 
