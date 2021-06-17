@@ -138,11 +138,11 @@ function! vimscript_indentexpr#parse(line, lnum) abort
 
 	elseif s:ENABLE_VIM9 && (text =~# '[{(\[]$')
 		let type = s:TYPE_NEXT_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# '}$') && s:xxx('{', '}', a:lnum)
+	elseif s:ENABLE_VIM9 && (text =~# '}$') && s:expect_pair('{', '}', a:lnum)
 		let type = s:TYPE_LAST_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# ')$') && s:xxx('(', ')', a:lnum)
+	elseif s:ENABLE_VIM9 && (text =~# ')$') && s:expect_pair('(', ')', a:lnum)
 		let type = s:TYPE_LAST_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# '\]$') && s:xxx('\[', '\]', a:lnum)
+	elseif s:ENABLE_VIM9 && (text =~# '\]$') && s:expect_pair('\[', '\]', a:lnum)
 		let type = s:TYPE_LAST_CONTINUOUS
 
 	elseif text =~# '^\<if\>.*\<endi\%[f\]\>$'
@@ -196,6 +196,7 @@ function! vimscript_indentexpr#parse(line, lnum) abort
 endfunction
 
 function! vimscript_indentexpr#run_tests() abort
+	set nomore
 	syntax on
 	filetype plugin indent on
 
@@ -550,19 +551,26 @@ function! vimscript_indentexpr#run_tests() abort
 	endif
 
 	if !empty(v:errors)
-		call writefile(v:errors, s:TEST_LOG)
+		let lines = []
 		for err in v:errors
 			let xs = split(err, '\(Expected\|but got\)')
 			echohl Error
 			if 3 == len(xs)
+				let lines += [
+					\ xs[0],
+					\ '  Expected ' .. xs[1],
+					\ '  but got  ' .. xs[2],
+					\ ]
 				echo xs[0]
 				echo '  Expected ' .. xs[1]
 				echo '  but got  ' .. xs[2]
 			else
+				let lines += [err]
 				echo err
 			endif
 			echohl None
 		endfor
+		call writefile(lines, s:TEST_LOG)
 	endif
 endfunction
 
@@ -616,11 +624,10 @@ function! s:run_test(lines, expect) abort
 			call setbufline(bufnr(), lnum, line)
 		endfor
 		call feedkeys('gg=G', 'xn')
-		sleep 100m
 		let formatted_lines = getbufline('%', 1, '$')
 	finally
 		bdelete!
 	endtry
-	call assert_equal(formatted_lines, a:expect)
+	call assert_equal(a:expect, formatted_lines)
 endfunction
 
