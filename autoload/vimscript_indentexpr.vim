@@ -51,7 +51,6 @@ function! vimscript_indentexpr#exec() abort
 	if (s:TYPE_KEEP_CONTINUOUS == curr_info['parsed']['type'])
 		" keep
 
-
 	elseif (s:TYPE_CURR_CONTINUOUS == curr_info['parsed']['type']) || (s:TYPE_QUESTION == curr_info['parsed']['type'])
 		if (s:TYPE_CURR_CONTINUOUS != prev_info['parsed']['type'])
 			let indent += shiftwidth()

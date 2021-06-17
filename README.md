@@ -12,21 +12,27 @@ This plugin provides to format legacy Vim script and Vim9 script if possible.
 ## Sample.1
 __before__
 ```
+augroup xxx
+autocmd!
 autocmd FileType vim
 \ : if 1
 \ |     echo 1234
 \ | else
 \ |     echo 5678
 \ | endif
+augroup END
 ```
 __after__
 ```
-autocmd FileType vim
-    \ : if 1
-    \ |     echo 1234
-    \ | else
-    \ |     echo 5678
-    \ | endif
+augroup xxx
+    autocmd!
+	autocmd FileType vim
+		\ : if 1
+		\ |     echo 1234
+		\ | else
+		\ |     echo 5678
+		\ | endif
+augroup END
 ```
 
 ## Sample.2 (Vim9 syntax)
@@ -121,6 +127,34 @@ __after__
 var total = m
     + n
 echo 123
+```
+
+## Sample.7 (Vim9 syntax)
+__before__
+```
+var xs = [
+a,
+b,
+c,
+d], [
+e,
+f,
+g,
+h]
+m()
+```
+__after__
+```
+var xs = [
+    a,
+    b,
+    c,
+    d], [
+    e,
+    f,
+    g,
+    h]
+m()
 ```
 
 
