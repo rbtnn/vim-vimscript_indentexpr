@@ -322,16 +322,18 @@ function! vimscript_indentexpr#run_tests() abort
 		\ ])
 
 	call s:run_test([
-		\ 'def xxx',
+		\ 'def outter()',
 		\ 'echo 12',
+		\ 'def inner()',
+		\ 'echo 34',
 		\ 'enddef',
-		\ 'def xxx',
 		\ 'enddef',
 		\ ], [
-		\ 'def xxx',
+		\ 'def outter()',
 		\ '    echo 12',
-		\ 'enddef',
-		\ 'def xxx',
+		\ '    def inner()',
+		\ '        echo 34',
+		\ '    enddef',
 		\ 'enddef',
 		\ ])
 
@@ -378,27 +380,33 @@ function! vimscript_indentexpr#run_tests() abort
 		call s:run_test([
 			\ 'Func (',
 			\ 'arg)',
+			\ 'echo 123',
 			\ ], [
 			\ 'Func (',
 			\ '    arg)',
+			\ 'echo 123',
 			\ ])
 
 		call s:run_test([
 			\ 'Func (',
 			\ 'arg',
 			\ ')',
+			\ 'echo 123',
 			\ ], [
 			\ 'Func (',
 			\ '    arg',
 			\ '    )',
+			\ 'echo 123',
 			\ ])
 
 		call s:run_test([
 			\ 'var total = m',
 			\ '+ n',
+			\ 'echo 123',
 			\ ], [
 			\ 'var total = m',
 			\ '    + n',
+			\ 'echo 123',
 			\ ])
 
 		call s:run_test([
@@ -509,12 +517,14 @@ function! vimscript_indentexpr#run_tests() abort
 			\ '->method()',
 			\ '->method()',
 			\ '->method()',
+			\ 'F()',
 			\ ], [
 			\ 'x',
 			\ '    ->method()',
 			\ '    ->method()',
 			\ '    ->method()',
 			\ '    ->method()',
+			\ 'F()',
 			\ ])
 
 		call s:run_test([

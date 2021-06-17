@@ -7,10 +7,19 @@
 
 This plugin provides to format legacy Vim script and Vim9 script if possible.
 
-## Why I create this
+## Samples
 
-1. Writing a Vim script, I use `gg=G` to format the codes as follows:
-
+## Sample.1
+__before__
+```
+autocmd FileType vim
+\ : if 1
+\ |     echo 1234
+\ | else
+\ |     echo 5678
+\ | endif
+```
+__after__
 ```
 autocmd FileType vim
     \ : if 1
@@ -20,16 +29,100 @@ autocmd FileType vim
     \ | endif
 ```
 
-But the formatted codes is so bad.
+## Sample.2 (Vim9 syntax)
+__before__
+```
+if v:true
+let a = p
+? 1
+: 2
+echo 234
+:2
+echo 234
+endif
+```
+__after__
+```
+if v:true
+    let a = p
+        ? 1
+        : 2
+    echo 234
+    :2
+    echo 234
+endif
+```
 
+## Sample.3 (Vim9 syntax)
+__before__
 ```
-autocmd FileType vim
-    \ : if 1
-    \ |     echo 1234
-    \ | else
-        \ |     echo 5678
-        \ | endif
+x
+->method()
+->method()
+->method()
+->method()
+F()
 ```
+__after__
+```
+x
+    ->method()
+    ->method()
+    ->method()
+    ->method()
+F()
+```
+
+## Sample.4 (Vim9 syntax)
+__before__
+```
+def outter()
+echo 12
+def inner()
+echo 34
+enddef
+enddef
+```
+__after__
+```
+def outter()
+    echo 12
+    def inner()
+        echo 34
+    enddef
+enddef
+```
+
+## Sample.5 (Vim9 syntax)
+__before__
+```
+Func (
+arg
+)
+echo 123
+```
+__after__
+```
+Func (
+    arg
+    )
+echo 123
+```
+
+## Sample.6 (Vim9 syntax)
+__before__
+```
+var total = m
++ n
+echo 123
+```
+__after__
+```
+var total = m
+    + n
+echo 123
+```
+
 
 ## Installation
 
