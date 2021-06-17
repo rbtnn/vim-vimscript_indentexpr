@@ -126,7 +126,7 @@ function! vimscript_indentexpr#parse(line, lnum) abort
 
 	elseif s:ENABLE_VIM9 && (text =~# '^?')
 		let type = s:TYPE_QUESTION
-	elseif s:ENABLE_VIM9 && (text =~# '^:') && s:expect_type(s:TYPE_QUESTION, a:lnum - 1)
+	elseif s:ENABLE_VIM9 && (text =~# '^:') && s:expect_type([(s:TYPE_QUESTION)], a:lnum - 1)
 		let type = s:TYPE_COLLON
 
 	elseif s:ENABLE_VIM9 && (text =~# '\]\s*,\s*[{(\[]$') && s:expect_pair('{', '}', a:lnum)
@@ -185,9 +185,9 @@ function! vimscript_indentexpr#parse(line, lnum) abort
 		let type = s:TYPE_FINALLY
 	elseif text =~# '^\<endt\%[ry\]\>'
 		let type = s:TYPE_ENDTRY
-	elseif text =~# '^\<enddef\>'
+	elseif s:ENABLE_VIM9 && (text =~# '^\<enddef\>')
 		let type = s:TYPE_ENDDEF
-	elseif text =~# '^\<def\>'
+	elseif s:ENABLE_VIM9 && (text =~# '^\<def\>')
 		let type = s:TYPE_DEF
 	else
 		let type = type
@@ -322,22 +322,6 @@ function! vimscript_indentexpr#run_tests() abort
 		\ ])
 
 	call s:run_test([
-		\ 'def outter()',
-		\ 'echo 12',
-		\ 'def inner()',
-		\ 'echo 34',
-		\ 'enddef',
-		\ 'enddef',
-		\ ], [
-		\ 'def outter()',
-		\ '    echo 12',
-		\ '    def inner()',
-		\ '        echo 34',
-		\ '    enddef',
-		\ 'enddef',
-		\ ])
-
-	call s:run_test([
 		\ 'augroup xxx',
 		\ 'autocmd!',
 		\ 'autocmd FileType vim',
@@ -376,6 +360,23 @@ function! vimscript_indentexpr#run_tests() abort
 		call assert_equal(vimscript_indentexpr#parse('   ->method()', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
 		call assert_equal(vimscript_indentexpr#parse('   .. str', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
 		call assert_equal(vimscript_indentexpr#parse('   .member', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+
+		call s:run_test([
+			\ 'def outter()',
+			\ 'echo 12',
+			\ 'def inner()',
+			\ 'echo 34',
+			\ 'enddef',
+			\ 'enddef',
+			\ ], [
+			\ 'def outter()',
+			\ '    echo 12',
+			\ '    def inner()',
+			\ '        echo 34',
+			\ '    enddef',
+			\ 'enddef',
+			\ ])
+
 
 		call s:run_test([
 			\ 'Func (',
@@ -573,16 +574,15 @@ function! s:expect_pair(st, ed, n) abort
 	let lnum = searchpairpos(a:st, '', a:ed, 'bn')[0]
 	call setpos('.', saved)
 	if (1 <= lnum) && (lnum <= line('$')) && (a:n != lnum)
-		let x = vimscript_indentexpr#parse(getline(lnum), lnum)
-		return (x['type'] == s:TYPE_NEXT_CONTINUOUS) || (x['type'] == s:TYPE_KEEP_CONTINUOUS)
+		return s:expect_type([(s:TYPE_NEXT_CONTINUOUS), (s:TYPE_KEEP_CONTINUOUS)], lnum)
 	else
 		return v:false
 	endif
 endfunction
 
-function! s:expect_type(t, n) abort
+function! s:expect_type(ts, n) abort
 	let x = vimscript_indentexpr#parse(getline(a:n), a:n)
-	return x['type'] == a:t
+	return -1 != index(a:ts, x['type'])
 endfunction
 
 function! s:prev(lnum) abort
@@ -616,6 +616,7 @@ function! s:run_test(lines, expect) abort
 			call setbufline(bufnr(), lnum, line)
 		endfor
 		call feedkeys('gg=G', 'xn')
+		sleep 100m
 		let formatted_lines = getbufline('%', 1, '$')
 	finally
 		bdelete!
