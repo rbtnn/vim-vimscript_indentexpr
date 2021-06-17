@@ -26,12 +26,12 @@ __after__
 ```
 augroup xxx
     autocmd!
-	autocmd FileType vim
-		\ : if 1
-		\ |     echo 1234
-		\ | else
-		\ |     echo 5678
-		\ | endif
+    autocmd FileType vim
+        \ : if 1
+        \ |     echo 1234
+        \ | else
+        \ |     echo 5678
+        \ | endif
 augroup END
 ```
 
