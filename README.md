@@ -48,6 +48,40 @@ augroup xxx
 augroup END
 ```
 
+### heredoc (legacy)
+__before__
+```
+if v:true
+var lines =<< trim END
+text text text
+   text text text
+text text text
+       text text
+   text text text
+         text text text
+END
+echo 123
+else
+echo 456
+endif
+```
+__after__
+```
+if v:true
+    var lines =<< trim END
+text text text
+   text text text
+text text text
+       text text
+   text text text
+         text text text
+END
+    echo 123
+else
+    echo 456
+endif
+```
+
 ### binary operators (Vim9)
 __before__
 ```

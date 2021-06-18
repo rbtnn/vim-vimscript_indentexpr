@@ -305,6 +305,36 @@ function! vimscript_indentexpr#run_tests() abort
 		let g:vim_indent_cont = 2
 
 		call s:run_test([
+		  \ 'if v:true',
+		  \ 'var lines =<< trim END',
+		  \ 'text text text',
+		  \ '   text text text',
+		  \ 'text text text',
+		  \ '       text text',
+		  \ '   text text text',
+		  \ '         text text text',
+		  \ 'END',
+		  \ 'echo 123',
+		  \ 'else',
+		  \ 'echo 456',
+		  \ 'endif',
+		  \ ], [
+		  \ 'if v:true',
+		  \ '    var lines =<< trim END',
+		  \ 'text text text',
+		  \ '   text text text',
+		  \ 'text text text',
+		  \ '       text text',
+		  \ '   text text text',
+		  \ '         text text text',
+		  \ 'END',
+		  \ '    echo 123',
+		  \ 'else',
+		  \ '    echo 456',
+		  \ 'endif',
+		  \ ])
+
+		call s:run_test([
 		  \ 'augroup! xxx',
 		  \ 'echo 12',
 		  \ ], [
