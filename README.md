@@ -20,7 +20,7 @@ Plug 'rbtnn/vim-vimscript_indentexpr'
 
 ## Samples
 
-`g:vim_indent_cont` is `1` In following samples.
+`shiftwidth()` is `4` and `g:vim_indent_cont` is `2` in following samples.
 
 ### augroup (legacy)
 __before__
@@ -40,11 +40,11 @@ __after__
 augroup xxx
     autocmd!
     autocmd FileType vim
-     \ : if 1
-     \ |     echo 1234
-     \ | else
-     \ |     echo 5678
-     \ | endif
+      \ : if 1
+      \ |     echo 1234
+      \ | else
+      \ |     echo 5678
+      \ | endif
 augroup END
 ```
 
@@ -64,8 +64,8 @@ __after__
 ```
 if v:true
     let a = p
-     ? 1
-     : 2
+      ? 1
+      : 2
     echo 234
     :2
     echo 234
@@ -85,10 +85,10 @@ F()
 __after__
 ```
 x
- ->method()
- ->method()
- ->method()
- ->method()
+  ->method()
+  ->method()
+  ->method()
+  ->method()
 F()
 ```
 
@@ -123,8 +123,8 @@ echo 123
 __after__
 ```
 Func (
- arg
- )
+  arg
+  )
 echo 123
 ```
 
@@ -138,7 +138,7 @@ echo 123
 __after__
 ```
 var total = m
- + n
+  + n
 echo 123
 ```
 
@@ -159,14 +159,14 @@ m()
 __after__
 ```
 var xs = [
- a,
- b,
- c,
- d], [
- e,
- f,
- g,
- h]
+  a,
+  b,
+  c,
+  d], [
+  e,
+  f,
+  g,
+  h]
 m()
 ```
 
@@ -183,7 +183,7 @@ __after__
 ```
 {
     let n = a
-     + b
+      + b
     return n
 }
 ```
@@ -205,7 +205,7 @@ This recognizes block but lambda and block.
 var Lambda = (arg) =>
  {
      let n = a
-      + b
+       + b
      return n
  }
  echo 123
@@ -225,9 +225,35 @@ __after__
 ```
 var Lambda = (arg) => {
      let n = a
-      + b
+       + b
      return n
  }
 echo 123
+```
+
+### dictionary (Vim9)
+__before__
+```
+if v:true
+popup_setoptions(winid, {
+"title": "xyz",
+})
+else
+popup_setoptions(winid, {
+"title": "abc",
+})
+endif
+```
+__after__
+```
+if v:true
+    popup_setoptions(winid, {
+          "title": "xyz",
+      })
+else
+    popup_setoptions(winid, {
+          "title": "abc",
+      })
+endif
 ```
 
