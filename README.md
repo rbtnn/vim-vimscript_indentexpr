@@ -19,275 +19,287 @@ Plug 'rbtnn/vim-vimscript_indentexpr'
 ```
 
 ## Samples
+Following examples are before/after when using `gg=G`.  
+`shiftwidth()` is `4` and `g:vim_indent_cont` is `2` in following examples.  
 
-`shiftwidth()` is `4` and `g:vim_indent_cont` is `2` in following samples.
+* __Augroup (legacy)__
 
-### augroup (legacy)
-__before__
-```
-augroup xxx
-autocmd!
-autocmd FileType vim
-\ : if 1
-\ |     echo 1234
-\ | else
-\ |     echo 5678
-\ | endif
-augroup END
-```
-__after__
-```
-augroup xxx
+    *before*
+    ```
+    augroup xxx
     autocmd!
     autocmd FileType vim
-      \ : if 1
-      \ |     echo 1234
-      \ | else
-      \ |     echo 5678
-      \ | endif
-augroup END
-```
+    \ : if 1
+    \ |     echo 1234
+    \ | else
+    \ |     echo 5678
+    \ | endif
+    augroup END
+    ```
+    *after*
+    ```
+    augroup xxx
+        autocmd!
+        autocmd FileType vim
+          \ : if 1
+          \ |     echo 1234
+          \ | else
+          \ |     echo 5678
+          \ | endif
+    augroup END
+    ```
 
-### heredoc (legacy)
-__before__
-```
-if v:true
-var lines =<< trim END
-text text text
-   text text text
-text text text
-       text text
-   text text text
-         text text text
-END
-echo 123
-else
-echo 456
-endif
-```
-__after__
-```
-if v:true
+* __Heredoc (legacy)__
+
+    *before*
+    ```
+    if v:true
     var lines =<< trim END
-text text text
-   text text text
-text text text
-       text text
-   text text text
-         text text text
-END
+    text text text
+       text text text
+    text text text
+           text text
+       text text text
+             text text text
+    END
     echo 123
-else
+    else
     echo 456
-endif
-```
+    endif
+    ```
+    *after*
+    ```
+    if v:true
+        var lines =<< trim END
+    text text text
+       text text text
+    text text text
+           text text
+       text text text
+             text text text
+    END
+        echo 123
+    else
+        echo 456
+    endif
+    ```
 
-### binary operators (Vim9)
-__before__
-```
-if v:true
-let a = p
-? 1
-: 2
-echo 234
-:2
-echo 234
-endif
-```
-__after__
-```
-if v:true
+* __Binary operators (Vim9)__
+
+    *before*
+    ```
+    if v:true
     let a = p
-      ? 1
-      : 2
+    ? 1
+    : 2
     echo 234
     :2
     echo 234
-endif
-```
+    endif
+    ```
+    *after*
+    ```
+    if v:true
+        let a = p
+          ? 1
+          : 2
+        echo 234
+        :2
+        echo 234
+    endif
+    ```
 
-### continues method (Vim9)
-__before__
-```
-x
-->method()
-->method()
-->method()
-->method()
-F()
-```
-__after__
-```
-x
-  ->method()
-  ->method()
-  ->method()
-  ->method()
-F()
-```
+* __Continues method (Vim9)__
 
-### def (Vim9)
-__before__
-```
-def outter()
-echo 12
-def inner()
-echo 34
-enddef
-enddef
-```
-__after__
-```
-def outter()
+    *before*
+    ```
+    x
+    ->method()
+    ->method()
+    ->method()
+    ->method()
+    F()
+    ```
+    *after*
+    ```
+    x
+      ->method()
+      ->method()
+      ->method()
+      ->method()
+    F()
+    ```
+
+* __Def (Vim9)__
+
+    *before*
+    ```
+    def outter()
     echo 12
     def inner()
-        echo 34
+    echo 34
     enddef
-enddef
-```
+    enddef
+    ```
+    *after*
+    ```
+    def outter()
+        echo 12
+        def inner()
+            echo 34
+        enddef
+    enddef
+    ```
 
-### continues parenthesis (Vim9)
-__before__
-```
-Func (
-arg
-)
-echo 123
-```
-__after__
-```
-Func (
-  arg
-  )
-echo 123
-```
+* __Continues parenthesis (Vim9)__
 
-### continues expr (Vim9)
-__before__
-```
-var total = m
-+ n
-echo 123
-```
-__after__
-```
-var total = m
-  + n
-echo 123
-```
+    *before*
+    ```
+    Func (
+    arg
+    )
+    echo 123
+    ```
+    *after*
+    ```
+    Func (
+      arg
+      )
+    echo 123
+    ```
 
-### continues array (Vim9)
-__before__
-```
-var xs = [
-a,
-b,
-c,
-d], [
-e,
-f,
-g,
-h]
-m()
-```
-__after__
-```
-var xs = [
-  a,
-  b,
-  c,
-  d], [
-  e,
-  f,
-  g,
-  h]
-m()
-```
+* __Continues expr (Vim9)__
 
-### block (Vim9)
-__before__
-```
-{
-let n = a
-+ b
-return n
-}
-```
-__after__
-```
-{
+    *before*
+    ```
+    var total = m
+    + n
+    echo 123
+    ```
+    *after*
+    ```
+    var total = m
+      + n
+    echo 123
+    ```
+
+* __Continues expr (Vim9)__
+
+    *before*
+    ```
+    var xs = [
+    a,
+    b,
+    c,
+    d], [
+    e,
+    f,
+    g,
+    h]
+    m()
+    ```
+    *after*
+    ```
+    var xs = [
+      a,
+      b,
+      c,
+      d], [
+      e,
+      f,
+      g,
+      h]
+    m()
+    ```
+
+* __Block (Vim9)__
+
+    *before*
+    ```
+    {
     let n = a
-      + b
+    + b
     return n
-}
-```
+    }
+    ```
+    *after*
+    ```
+    {
+        let n = a
+          + b
+        return n
+    }
+    ```
 
-### block (Vim9)
-__before__
-```
-var Lambda = (arg) =>
-{
-let n = a
-+ b
-return n
-}
-echo 123
-```
-__after__
-This recognizes block but lambda and block.
-```
-var Lambda = (arg) =>
- {
-     let n = a
-       + b
-     return n
- }
- echo 123
-```
+* __Block (Vim9)__
 
-### lambda and block (Vim9)
-__before__
-```
-var Lambda = (arg) => {
-let n = a
-+ b
-return n
-}
-echo 123
-```
-__after__
-```
-var Lambda = (arg) => {
-     let n = a
-       + b
-     return n
- }
-echo 123
-```
+    *before*
+    ```
+    var Lambda = (arg) =>
+    {
+    let n = a
+    + b
+    return n
+    }
+    echo 123
+    ```
+    *after*
+    ```
+    var Lambda = (arg) =>
+     {
+         let n = a
+           + b
+         return n
+     }
+     echo 123
+    ```
+    NOTE: This recognizes block but lambda and block.
 
-### dictionary (Vim9)
-__before__
-```
-if v:true
-popup_setoptions(winid, {
-"title": "xyz",
-})
-else
-popup_setoptions(winid, {
-"title": "abc",
-})
-endif
-```
-__after__
-```
-if v:true
+* __Lambda and Block (Vim9)__
+
+    *before*
+    ```
+    var Lambda = (arg) => {
+    let n = a
+    + b
+    return n
+    }
+    echo 123
+    ```
+    *after*
+    ```
+    var Lambda = (arg) => {
+         let n = a
+           + b
+         return n
+     }
+    echo 123
+    ```
+
+* __Dictionary (Vim9)__
+
+    *before*
+    ```
+    if v:true
     popup_setoptions(winid, {
-          "title": "xyz",
-      })
-else
+    "title": "xyz",
+    })
+    else
     popup_setoptions(winid, {
-          "title": "abc",
-      })
-endif
-```
+    "title": "abc",
+    })
+    endif
+    ```
+    *after*
+    ```
+    if v:true
+        popup_setoptions(winid, {
+              "title": "xyz",
+          })
+    else
+        popup_setoptions(winid, {
+              "title": "abc",
+          })
+    endif
+    ```
 
