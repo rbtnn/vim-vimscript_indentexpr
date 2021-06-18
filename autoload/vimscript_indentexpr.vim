@@ -1,9 +1,7 @@
 
 let s:TEST_LOG = expand('<sfile>:h:h:gs?\?/?') . '/test.log'
 
-if exists(':vim9script')
-	let s:ENABLE_VIM9 = v:true
-endif
+let s:ENABLE_VIM9 = exists(':vim9script')
 
 let s:TYPE_NORMAL = 'TYPE_NORMAL'
 let s:TYPE_ONELINER = 'TYPE_ONELINER'
