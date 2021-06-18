@@ -5,11 +5,24 @@
 [![neovim](https://github.com/rbtnn/vim-vimscript_indentexpr/workflows/neovim/badge.svg)](https://github.com/rbtnn/vim-vimscript_indentexpr/actions?query=workflow%3Aneovim)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-This plugin provides to format legacy Vim script and Vim9 script if possible.
+## Features
+* Supports Vim and Neovim.
+* Supports legacy Vim script syntax and Vim9 script syntax if possible.
+* Uses `g:vim_indent_cont` when indenting of continues line.
+
+## Installation
+
+This is an example of installation using [vim-plug](https://github.com/junegunn/vim-plug).
+
+```
+Plug 'rbtnn/vim-vimscript_indentexpr'
+```
 
 ## Samples
 
-## Sample.1
+`g:vim_indent_cont` is `1` In following samples.
+
+### augroup (legacy)
 __before__
 ```
 augroup xxx
@@ -27,15 +40,15 @@ __after__
 augroup xxx
     autocmd!
     autocmd FileType vim
-        \ : if 1
-        \ |     echo 1234
-        \ | else
-        \ |     echo 5678
-        \ | endif
+     \ : if 1
+     \ |     echo 1234
+     \ | else
+     \ |     echo 5678
+     \ | endif
 augroup END
 ```
 
-## Sample.2 (Vim9 syntax)
+### binary operators (Vim9)
 __before__
 ```
 if v:true
@@ -51,15 +64,15 @@ __after__
 ```
 if v:true
     let a = p
-        ? 1
-        : 2
+     ? 1
+     : 2
     echo 234
     :2
     echo 234
 endif
 ```
 
-## Sample.3 (Vim9 syntax)
+### continues method (Vim9)
 __before__
 ```
 x
@@ -72,14 +85,14 @@ F()
 __after__
 ```
 x
-    ->method()
-    ->method()
-    ->method()
-    ->method()
+ ->method()
+ ->method()
+ ->method()
+ ->method()
 F()
 ```
 
-## Sample.4 (Vim9 syntax)
+### def (Vim9)
 __before__
 ```
 def outter()
@@ -99,7 +112,7 @@ def outter()
 enddef
 ```
 
-## Sample.5 (Vim9 syntax)
+### continues parenthesis (Vim9)
 __before__
 ```
 Func (
@@ -110,12 +123,12 @@ echo 123
 __after__
 ```
 Func (
-    arg
-    )
+ arg
+ )
 echo 123
 ```
 
-## Sample.6 (Vim9 syntax)
+### continues expr (Vim9)
 __before__
 ```
 var total = m
@@ -125,11 +138,11 @@ echo 123
 __after__
 ```
 var total = m
-    + n
+ + n
 echo 123
 ```
 
-## Sample.7 (Vim9 syntax)
+### continues array (Vim9)
 __before__
 ```
 var xs = [
@@ -146,26 +159,75 @@ m()
 __after__
 ```
 var xs = [
-    a,
-    b,
-    c,
-    d], [
-    e,
-    f,
-    g,
-    h]
+ a,
+ b,
+ c,
+ d], [
+ e,
+ f,
+ g,
+ h]
 m()
 ```
 
-
-## Installation
-
-This is an example of installation using [vim-plug](https://github.com/junegunn/vim-plug).
-
+### block (Vim9)
+__before__
 ```
-Plug 'rbtnn/vim-vimscript_indentexpr'
+{
+let n = a
++ b
+return n
+}
+```
+__after__
+```
+{
+    let n = a
+     + b
+    return n
+}
 ```
 
-## Concepts
-* This plugin supports Vim and Neovim.
+### block (Vim9)
+__before__
+```
+var Lambda = (arg) =>
+{
+let n = a
++ b
+return n
+}
+echo 123
+```
+__after__
+This recognizes block but lambda and block.
+```
+var Lambda = (arg) =>
+ {
+     let n = a
+      + b
+     return n
+ }
+ echo 123
+```
+
+### lambda and block (Vim9)
+__before__
+```
+var Lambda = (arg) => {
+let n = a
++ b
+return n
+}
+echo 123
+```
+__after__
+```
+var Lambda = (arg) => {
+     let n = a
+      + b
+     return n
+ }
+echo 123
+```
 

@@ -12,6 +12,8 @@ let s:TYPE_CURR_CONTINUOUS = 'TYPE_CURR_CONTINUOUS'
 let s:TYPE_KEEP_CONTINUOUS = 'TYPE_KEEP_CONTINUOUS'
 let s:TYPE_NEXT_CONTINUOUS = 'TYPE_NEXT_CONTINUOUS'
 let s:TYPE_LAST_CONTINUOUS = 'TYPE_LAST_CONTINUOUS'
+let s:TYPE_BLOCK_CONTINUOUS = 'TYPE_BLOCK_CONTINUOUS'
+let s:TYPE_ENDBLOCK_CONTINUOUS = 'TYPE_ENDBLOCK_CONTINUOUS'
 let s:TYPE_QUESTION = 'TYPE_QUESTION'
 let s:TYPE_COLLON = 'TYPE_COLLON'
 let s:TYPE_IF = 'TYPE_IF'
@@ -32,6 +34,8 @@ let s:TYPE_FINALLY = 'TYPE_FINALLY'
 let s:TYPE_ENDTRY = 'TYPE_ENDTRY'
 let s:TYPE_DEF = 'TYPE_DEF'
 let s:TYPE_ENDDEF = 'TYPE_ENDDEF'
+let s:TYPE_BLOCK = 'TYPE_BLOCK'
+let s:TYPE_ENDBLOCK = 'TYPE_ENDBLOCK'
 
 
 
@@ -52,6 +56,15 @@ function! vimscript_indentexpr#exec() abort
 
 	if (s:TYPE_KEEP_CONTINUOUS == curr_info['parsed']['type'])
 		" keep
+
+	elseif (s:TYPE_BLOCK_CONTINUOUS == prev_info['parsed']['type'])
+		return indent + vim_indent_cont + shiftwidth()
+
+	elseif (s:TYPE_ENDBLOCK_CONTINUOUS == prev_info['parsed']['type'])
+		return indent - vim_indent_cont
+
+	elseif (s:TYPE_ENDBLOCK_CONTINUOUS == curr_info['parsed']['type'])
+		return indent - shiftwidth()
 
 	elseif (s:TYPE_CURR_CONTINUOUS == curr_info['parsed']['type']) || (s:TYPE_QUESTION == curr_info['parsed']['type'])
 		if (s:TYPE_CURR_CONTINUOUS != prev_info['parsed']['type'])
@@ -83,7 +96,8 @@ function! vimscript_indentexpr#exec() abort
 		\ (s:TYPE_CATCH == prev_info['parsed']['type']) ||
 		\ (s:TYPE_IF == prev_info['parsed']['type']) ||
 		\ (s:TYPE_ELSE == prev_info['parsed']['type']) ||
-		\ (s:TYPE_ELSEIF == prev_info['parsed']['type'])
+		\ (s:TYPE_ELSEIF == prev_info['parsed']['type']) ||
+		\ (s:TYPE_BLOCK == prev_info['parsed']['type'])
 
 	let c = (s:TYPE_ENDFUNCTION == curr_info['parsed']['type']) ||
 		\ (s:TYPE_ENDAUGROUP == curr_info['parsed']['type']) ||
@@ -95,7 +109,8 @@ function! vimscript_indentexpr#exec() abort
 		\ (s:TYPE_ENDTRY == curr_info['parsed']['type']) ||
 		\ (s:TYPE_ENDIF == curr_info['parsed']['type']) ||
 		\ (s:TYPE_ELSE == curr_info['parsed']['type']) ||
-		\ (s:TYPE_ELSEIF == curr_info['parsed']['type'])
+		\ (s:TYPE_ELSEIF == curr_info['parsed']['type']) ||
+		\ (s:TYPE_ENDBLOCK == curr_info['parsed']['type'])
 
 	if p
 		if c
@@ -125,25 +140,39 @@ function! vimscript_indentexpr#parse(line, lnum) abort
 	elseif s:ENABLE_VIM9 && (text =~# '^\(+\|-\|*\|/\|%\|\.\.\|->\|\.\)')
 		let type = s:TYPE_CURR_CONTINUOUS
 
+	elseif s:ENABLE_VIM9 && (text =~# '=>$')
+		let type = s:TYPE_NEXT_CONTINUOUS
+
+	elseif s:ENABLE_VIM9 && (text =~# '\S\s*{$')
+		let type = s:TYPE_BLOCK_CONTINUOUS
+	elseif s:ENABLE_VIM9 && (text =~# '^{$')
+		let type = s:TYPE_BLOCK
+
+	elseif s:ENABLE_VIM9 && (text =~# '^}\s*\S') && s:expect_pair('{', '}', a:lnum, [(s:TYPE_BLOCK), (s:TYPE_BLOCK_CONTINUOUS)])
+		let type = s:TYPE_ENDBLOCK_CONTINUOUS
+	elseif s:ENABLE_VIM9 && (text =~# '^}$') && s:expect_pair('{', '}', a:lnum, [(s:TYPE_BLOCK_CONTINUOUS)])
+		let type = s:TYPE_ENDBLOCK_CONTINUOUS
+	elseif s:ENABLE_VIM9 && (text =~# '^}$') && s:expect_pair('{', '}', a:lnum, [(s:TYPE_BLOCK)])
+		let type = s:TYPE_ENDBLOCK
+
 	elseif s:ENABLE_VIM9 && (text =~# '^?')
 		let type = s:TYPE_QUESTION
 	elseif s:ENABLE_VIM9 && (text =~# '^:') && s:expect_type([(s:TYPE_QUESTION)], a:lnum - 1)
 		let type = s:TYPE_COLLON
 
-	elseif s:ENABLE_VIM9 && (text =~# '\]\s*,\s*[{(\[]$') && s:expect_pair('{', '}', a:lnum)
+	elseif s:ENABLE_VIM9 && (text =~# '\]\s*,\s*[{(\[]$') && s:expect_pair('(', ')', a:lnum, [(s:TYPE_NEXT_CONTINUOUS), (s:TYPE_KEEP_CONTINUOUS)])
 		let type = s:TYPE_KEEP_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# '\]\s*,\s*[{(\[]$') && s:expect_pair('(', ')', a:lnum)
+	elseif s:ENABLE_VIM9 && (text =~# '\]\s*,\s*[{(\[]$') && s:expect_pair('\[', '\]', a:lnum, [(s:TYPE_NEXT_CONTINUOUS), (s:TYPE_KEEP_CONTINUOUS)])
 		let type = s:TYPE_KEEP_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# '\]\s*,\s*[{(\[]$') && s:expect_pair('\[', '\]', a:lnum)
-		let type = s:TYPE_KEEP_CONTINUOUS
+
 
 	elseif s:ENABLE_VIM9 && (text =~# '[{(\[]$')
 		let type = s:TYPE_NEXT_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# '}$') && s:expect_pair('{', '}', a:lnum)
+	elseif s:ENABLE_VIM9 && (text =~# '}$') && s:expect_pair('{', '}', a:lnum, [(s:TYPE_NEXT_CONTINUOUS), (s:TYPE_KEEP_CONTINUOUS)])
 		let type = s:TYPE_LAST_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# ')$') && s:expect_pair('(', ')', a:lnum)
+	elseif s:ENABLE_VIM9 && (text =~# ')$') && s:expect_pair('(', ')', a:lnum, [(s:TYPE_NEXT_CONTINUOUS), (s:TYPE_KEEP_CONTINUOUS)])
 		let type = s:TYPE_LAST_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# '\]$') && s:expect_pair('\[', '\]', a:lnum)
+	elseif s:ENABLE_VIM9 && (text =~# '\]$') && s:expect_pair('\[', '\]', a:lnum, [(s:TYPE_NEXT_CONTINUOUS), (s:TYPE_KEEP_CONTINUOUS)])
 		let type = s:TYPE_LAST_CONTINUOUS
 
 	elseif text =~# '^\<if\>.*\<endi\%[f\]\>$'
@@ -248,7 +277,7 @@ function! vimscript_indentexpr#run_tests() abort
 	if s:ENABLE_VIM9
 		call assert_equal(vimscript_indentexpr#parse('   #en', -1), { 'type' : s:TYPE_COMMENT, })
 		call assert_equal(vimscript_indentexpr#parse('   Func (', -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
-		call assert_equal(vimscript_indentexpr#parse('   Func {', -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   Func {', -1), { 'type' : s:TYPE_BLOCK_CONTINUOUS, })
 		call assert_equal(vimscript_indentexpr#parse('   Func [', -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
 		call assert_equal(vimscript_indentexpr#parse('   + i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
 		call assert_equal(vimscript_indentexpr#parse('   - i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
@@ -258,6 +287,7 @@ function! vimscript_indentexpr#run_tests() abort
 		call assert_equal(vimscript_indentexpr#parse('   ->method()', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
 		call assert_equal(vimscript_indentexpr#parse('   .. str', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
 		call assert_equal(vimscript_indentexpr#parse('   .member', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   {', -1), { 'type' : s:TYPE_BLOCK, })
 	endif
 
 	let g:vim_indent_cont = 8
@@ -415,6 +445,14 @@ function! vimscript_indentexpr#run_tests() abort
 			\ '        echo 34',
 			\ '    enddef',
 			\ 'enddef',
+			\ ])
+
+		call s:run_test([
+			\ 'filter(list, (k, v) =>',
+			\ 'v > 0)',
+			\ ], [
+			\ 'filter(list, (k, v) =>',
+			\ ' v > 0)',
 			\ ])
 
 		call s:run_test([
@@ -586,7 +624,67 @@ function! vimscript_indentexpr#run_tests() abort
 			\ '    echo 234',
 			\ 'endif',
 			\ ])
+
+		call s:run_test([
+			\ '{',
+			\ 'echo 234',
+			\ '}',
+			\ ], [
+			\ '{',
+			\ '    echo 234',
+			\ '}',
+			\ ])
+
+		call s:run_test([
+			\ 'var Lambda = (arg) => {',
+			\ 'let n = a',
+			\ '+ b',
+			\ 'return n',
+			\ '}',
+			\ ], [
+			\ 'var Lambda = (arg) => {',
+			\ '     let n = a',
+			\ '      + b',
+			\ '     return n',
+			\ ' }',
+			\ ])
+
+		call s:run_test([
+			\ 'var Lambda = (arg) =>',
+			\ '{',
+			\ 'let n = a',
+			\ '+ b',
+			\ 'return n',
+			\ '}',
+			\ 'M()',
+			\ ], [
+			\ 'var Lambda = (arg) =>',
+			\ ' {',
+			\ '     let n = a',
+			\ '      + b',
+			\ '     return n',
+			\ ' }',
+			\ ' M()',
+			\ ])
+
+		call s:run_test([
+			\ 'aaaa({',
+			\ 'let n = a',
+			\ '+ b',
+			\ 'return n',
+			\ '})->method()',
+			\ 'M()',
+			\ ], [
+			\ 'aaaa({',
+			\ '     let n = a',
+			\ '      + b',
+			\ '     return n',
+			\ ' })->method()',
+			\ 'M()',
+			\ ])
 	endif
+
+	let g:vim_indent_cont = 4
 
 	if !empty(v:errors)
 		let lines = []
@@ -614,13 +712,13 @@ endfunction
 
 
 
-function! s:expect_pair(st, ed, n) abort
+function! s:expect_pair(st, ed, n, ts) abort
 	let saved = getcurpos()
 	call setpos('.', [0, a:n, 0, 0])
 	let lnum = searchpairpos(a:st, '', a:ed, 'bn')[0]
 	call setpos('.', saved)
 	if (1 <= lnum) && (lnum <= line('$')) && (a:n != lnum)
-		return s:expect_type([(s:TYPE_NEXT_CONTINUOUS), (s:TYPE_KEEP_CONTINUOUS)], lnum)
+		return s:expect_type(a:ts, lnum)
 	else
 		return v:false
 	endif
