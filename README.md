@@ -18,7 +18,7 @@ This is an example of installation using [vim-plug](https://github.com/junegunn/
 Plug 'rbtnn/vim-vimscript_indentexpr'
 ```
 
-## Samples
+## Examples
 Following examples are before/after when using `gg=G`.  
 `shiftwidth()` is `4` and `g:vim_indent_cont` is `2` in following examples.  
 
