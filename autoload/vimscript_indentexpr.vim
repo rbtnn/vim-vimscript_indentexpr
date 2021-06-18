@@ -43,6 +43,7 @@ function! vimscript_indentexpr#exec() abort
 	let curr_info = s:curr(v:lnum)
 
 	let indent = prev_info['indent']
+	let n = get(g:, 'vim_indent_cont', shiftwidth())
 
 	if -1 != index(['vimLetHereDoc', 'vimLetHereDocStop'], curr_info['syn_name'])
 		return -1
@@ -53,20 +54,20 @@ function! vimscript_indentexpr#exec() abort
 
 	elseif (s:TYPE_CURR_CONTINUOUS == curr_info['parsed']['type']) || (s:TYPE_QUESTION == curr_info['parsed']['type'])
 		if (s:TYPE_CURR_CONTINUOUS != prev_info['parsed']['type'])
-			let indent += shiftwidth()
+			let indent += n
 		endif
 
 	elseif (s:TYPE_LAST_CONTINUOUS == prev_info['parsed']['type'])
-		let indent -= shiftwidth()
+		let indent -= n
 
 	else
 		if (s:TYPE_COLLON == prev_info['parsed']['type'])
-			let indent -= shiftwidth()
+			let indent -= n
 
 		elseif (s:TYPE_CURR_CONTINUOUS == prev_info['parsed']['type'])
-			let indent -= shiftwidth()
+			let indent -= n
 		elseif (s:TYPE_NEXT_CONTINUOUS == prev_info['parsed']['type'])
-			let indent += shiftwidth()
+			let indent += n
 		endif
 
 	endif
@@ -99,11 +100,11 @@ function! vimscript_indentexpr#exec() abort
 		if c
 			return indent
 		else
-			return indent + shiftwidth()
+			return indent + n
 		endif
 	else
 		if c
-			return indent - shiftwidth()
+			return indent - n
 		else
 			return indent
 		endif
@@ -240,6 +241,20 @@ function! vimscript_indentexpr#run_tests() abort
 	call assert_equal(vimscript_indentexpr#parse('   endtry', -1), { 'type' : s:TYPE_ENDTRY, })
 	call assert_equal(vimscript_indentexpr#parse('   def', -1), { 'type' : s:TYPE_DEF, })
 	call assert_equal(vimscript_indentexpr#parse('   enddef', -1), { 'type' : s:TYPE_ENDDEF, })
+
+	let g:vim_indent_cont = 1
+
+	call s:run_test([
+		\ 'if 1',
+		\ 'echo 12',
+		\ 'endif',
+		\ ], [
+		\ 'if 1',
+		\ ' echo 12',
+		\ 'endif',
+		\ ])
+
+	let g:vim_indent_cont = 4
 
 	call s:run_test([
 		\ 'try',
