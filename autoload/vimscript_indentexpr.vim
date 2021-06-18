@@ -154,6 +154,8 @@ function! vimscript_indentexpr#parse(line, lnum) abort
 		let type = s:TYPE_ONELINER
 	elseif text =~# '^\<try\>.*\<endt\%[ry\]\>$'
 		let type = s:TYPE_ONELINER
+	elseif text =~# '^\<aug\%[roup\]\>!'
+		let type = s:TYPE_ONELINER
 	elseif text =~# '^\<if\>'
 		let type = s:TYPE_IF
 	elseif text =~# '^\<elsei\%[f\]\>'
@@ -273,6 +275,14 @@ function! vimscript_indentexpr#run_tests() abort
 		\ ])
 
 	let g:vim_indent_cont = 1
+
+	call s:run_test([
+		\ 'augroup! xxx',
+		\ 'echo 12',
+		\ ], [
+		\ 'augroup! xxx',
+		\ 'echo 12',
+		\ ])
 
 	call s:run_test([
 		\ 'if 1',
