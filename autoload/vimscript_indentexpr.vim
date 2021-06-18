@@ -265,10 +265,10 @@ function! vimscript_indentexpr#run_tests() abort
 		call assert_equal(vimscript_indentexpr#parse('   catch', -1), { 'type' : s:TYPE_CATCH, })
 		call assert_equal(vimscript_indentexpr#parse('   finally', -1), { 'type' : s:TYPE_FINALLY, })
 		call assert_equal(vimscript_indentexpr#parse('   endtry', -1), { 'type' : s:TYPE_ENDTRY, })
-		call assert_equal(vimscript_indentexpr#parse('   def', -1), { 'type' : s:TYPE_DEF, })
-		call assert_equal(vimscript_indentexpr#parse('   enddef', -1), { 'type' : s:TYPE_ENDDEF, })
 
 		if s:ENABLE_VIM9
+			call assert_equal(vimscript_indentexpr#parse('   def', -1), { 'type' : s:TYPE_DEF, })
+			call assert_equal(vimscript_indentexpr#parse('   enddef', -1), { 'type' : s:TYPE_ENDDEF, })
 			call assert_equal(vimscript_indentexpr#parse('   #en', -1), { 'type' : s:TYPE_COMMENT, })
 			call assert_equal(vimscript_indentexpr#parse('   Func (', -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
 			call assert_equal(vimscript_indentexpr#parse('   Func {', -1), { 'type' : s:TYPE_BLOCK_CONTINUOUS, })
@@ -302,35 +302,37 @@ function! vimscript_indentexpr#run_tests() abort
 
 		let g:vim_indent_cont = 2
 
-		call s:run_test([
-		  \ 'if v:true',
-		  \ 'var lines =<< trim END',
-		  \ 'text text text',
-		  \ '   text text text',
-		  \ 'text text text',
-		  \ '       text text',
-		  \ '   text text text',
-		  \ '         text text text',
-		  \ 'END',
-		  \ 'echo 123',
-		  \ 'else',
-		  \ 'echo 456',
-		  \ 'endif',
-		  \ ], [
-		  \ 'if v:true',
-		  \ '    var lines =<< trim END',
-		  \ 'text text text',
-		  \ '   text text text',
-		  \ 'text text text',
-		  \ '       text text',
-		  \ '   text text text',
-		  \ '         text text text',
-		  \ 'END',
-		  \ '    echo 123',
-		  \ 'else',
-		  \ '    echo 456',
-		  \ 'endif',
-		  \ ])
+		if !has('nvim')
+			call s:run_test([
+			  \ 'if v:true',
+			  \ 'var lines =<< trim END',
+			  \ 'text text text',
+			  \ '   text text text',
+			  \ 'text text text',
+			  \ '       text text',
+			  \ '   text text text',
+			  \ '         text text text',
+			  \ 'END',
+			  \ 'echo 123',
+			  \ 'else',
+			  \ 'echo 456',
+			  \ 'endif',
+			  \ ], [
+			  \ 'if v:true',
+			  \ '    var lines =<< trim END',
+			  \ 'text text text',
+			  \ '   text text text',
+			  \ 'text text text',
+			  \ '       text text',
+			  \ '   text text text',
+			  \ '         text text text',
+			  \ 'END',
+			  \ '    echo 123',
+			  \ 'else',
+			  \ '    echo 456',
+			  \ 'endif',
+			  \ ])
+		endif
 
 		call s:run_test([
 		  \ 'augroup! xxx',

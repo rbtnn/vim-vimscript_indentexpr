@@ -22,7 +22,7 @@ Plug 'rbtnn/vim-vimscript_indentexpr'
 Following examples are before/after when using `gg=G`.  
 `shiftwidth()` is `4` and `g:vim_indent_cont` is `2` in following examples.  
 
-* __Augroup (legacy)__
+* __Augroup (Legacy)__
 
     *before*
     ```vim
@@ -49,7 +49,7 @@ Following examples are before/after when using `gg=G`.
     augroup END
     ```
 
-* __Heredoc (legacy)__
+* __Heredoc (Legacy, not support Neovim)__
 
     *before*
     ```vim
