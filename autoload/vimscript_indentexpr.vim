@@ -43,7 +43,8 @@ function! vimscript_indentexpr#exec() abort
 	let curr_info = s:curr(v:lnum)
 
 	let indent = prev_info['indent']
-	let n = get(g:, 'vim_indent_cont', shiftwidth())
+
+	let vim_indent_cont = get(g:, 'vim_indent_cont', 0)
 
 	if -1 != index(['vimLetHereDoc', 'vimLetHereDocStop'], curr_info['syn_name'])
 		return -1
@@ -54,20 +55,20 @@ function! vimscript_indentexpr#exec() abort
 
 	elseif (s:TYPE_CURR_CONTINUOUS == curr_info['parsed']['type']) || (s:TYPE_QUESTION == curr_info['parsed']['type'])
 		if (s:TYPE_CURR_CONTINUOUS != prev_info['parsed']['type'])
-			let indent += n
+			let indent += vim_indent_cont
 		endif
 
 	elseif (s:TYPE_LAST_CONTINUOUS == prev_info['parsed']['type'])
-		let indent -= n
+		let indent -= vim_indent_cont
 
 	else
 		if (s:TYPE_COLLON == prev_info['parsed']['type'])
-			let indent -= n
+			let indent -= vim_indent_cont
 
 		elseif (s:TYPE_CURR_CONTINUOUS == prev_info['parsed']['type'])
-			let indent -= n
+			let indent -= vim_indent_cont
 		elseif (s:TYPE_NEXT_CONTINUOUS == prev_info['parsed']['type'])
-			let indent += n
+			let indent += vim_indent_cont
 		endif
 
 	endif
@@ -100,11 +101,11 @@ function! vimscript_indentexpr#exec() abort
 		if c
 			return indent
 		else
-			return indent + n
+			return indent + shiftwidth()
 		endif
 	else
 		if c
-			return indent - n
+			return indent - shiftwidth()
 		else
 			return indent
 		endif
@@ -242,6 +243,35 @@ function! vimscript_indentexpr#run_tests() abort
 	call assert_equal(vimscript_indentexpr#parse('   def', -1), { 'type' : s:TYPE_DEF, })
 	call assert_equal(vimscript_indentexpr#parse('   enddef', -1), { 'type' : s:TYPE_ENDDEF, })
 
+	if s:ENABLE_VIM9
+		call assert_equal(vimscript_indentexpr#parse('   #en', -1), { 'type' : s:TYPE_COMMENT, })
+		call assert_equal(vimscript_indentexpr#parse('   Func (', -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   Func {', -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   Func [', -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   + i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   - i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   * i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   / i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   % i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   ->method()', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   .. str', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   .member', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+	endif
+
+	let g:vim_indent_cont = 8
+
+	call s:run_test([
+		\ 'let x = [',
+		\ '\ 1,',
+		\ '\ 2,',
+		\ '\ ]',
+		\ ], [
+		\ 'let x = [',
+		\ '        \ 1,',
+		\ '        \ 2,',
+		\ '        \ ]',
+		\ ])
+
 	let g:vim_indent_cont = 1
 
 	call s:run_test([
@@ -250,11 +280,9 @@ function! vimscript_indentexpr#run_tests() abort
 		\ 'endif',
 		\ ], [
 		\ 'if 1',
-		\ ' echo 12',
+		\ '    echo 12',
 		\ 'endif',
 		\ ])
-
-	let g:vim_indent_cont = 4
 
 	call s:run_test([
 		\ 'try',
@@ -352,30 +380,17 @@ function! vimscript_indentexpr#run_tests() abort
 		\ 'augroup xxx',
 		\ '    autocmd!',
 		\ '    autocmd FileType vim',
-		\ '        \ : if 1',
-		\ '        \ |     echo 12',
-		\ '        \ | else',
-		\ '        \ |     echo 12',
-		\ '        \ | endif',
+		\ '     \ : if 1',
+		\ '     \ |     echo 12',
+		\ '     \ | else',
+		\ '     \ |     echo 12',
+		\ '     \ | endif',
 		\ 'augroup END',
 		\ 'augroup xxx',
 		\ 'augroup END',
 		\ ])
 
 	if s:ENABLE_VIM9
-		call assert_equal(vimscript_indentexpr#parse('   #en', -1), { 'type' : s:TYPE_COMMENT, })
-		call assert_equal(vimscript_indentexpr#parse('   Func (', -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
-		call assert_equal(vimscript_indentexpr#parse('   Func {', -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
-		call assert_equal(vimscript_indentexpr#parse('   Func [', -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
-		call assert_equal(vimscript_indentexpr#parse('   + i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-		call assert_equal(vimscript_indentexpr#parse('   - i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-		call assert_equal(vimscript_indentexpr#parse('   * i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-		call assert_equal(vimscript_indentexpr#parse('   / i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-		call assert_equal(vimscript_indentexpr#parse('   % i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-		call assert_equal(vimscript_indentexpr#parse('   ->method()', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-		call assert_equal(vimscript_indentexpr#parse('   .. str', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-		call assert_equal(vimscript_indentexpr#parse('   .member', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-
 		call s:run_test([
 			\ 'def outter()',
 			\ 'echo 12',
@@ -392,14 +407,13 @@ function! vimscript_indentexpr#run_tests() abort
 			\ 'enddef',
 			\ ])
 
-
 		call s:run_test([
 			\ 'Func (',
 			\ 'arg)',
 			\ 'echo 123',
 			\ ], [
 			\ 'Func (',
-			\ '    arg)',
+			\ ' arg)',
 			\ 'echo 123',
 			\ ])
 
@@ -410,8 +424,8 @@ function! vimscript_indentexpr#run_tests() abort
 			\ 'echo 123',
 			\ ], [
 			\ 'Func (',
-			\ '    arg',
-			\ '    )',
+			\ ' arg',
+			\ ' )',
 			\ 'echo 123',
 			\ ])
 
@@ -421,7 +435,7 @@ function! vimscript_indentexpr#run_tests() abort
 			\ 'echo 123',
 			\ ], [
 			\ 'var total = m',
-			\ '    + n',
+			\ ' + n',
 			\ 'echo 123',
 			\ ])
 
@@ -434,10 +448,10 @@ function! vimscript_indentexpr#run_tests() abort
 			\ 'm()',
 			\ ], [
 			\ 'var xs = [',
-			\ '    a,',
-			\ '    b,',
-			\ '    c,',
-			\ '    d]',
+			\ ' a,',
+			\ ' b,',
+			\ ' c,',
+			\ ' d]',
 			\ 'm()',
 			\ ])
 
@@ -454,14 +468,14 @@ function! vimscript_indentexpr#run_tests() abort
 			\ 'm()',
 			\ ], [
 			\ 'var xs = [',
-			\ '    a,',
-			\ '    b,',
-			\ '    c,',
-			\ '    d], [',
-			\ '    e,',
-			\ '    f,',
-			\ '    g,',
-			\ '    h]',
+			\ ' a,',
+			\ ' b,',
+			\ ' c,',
+			\ ' d], [',
+			\ ' e,',
+			\ ' f,',
+			\ ' g,',
+			\ ' h]',
 			\ 'm()',
 			\ ])
 
@@ -474,10 +488,10 @@ function! vimscript_indentexpr#run_tests() abort
 			\ 'm()',
 			\ ], [
 			\ 'F((1,2,3), [',
-			\ '    a,',
-			\ '    b,',
-			\ '    c,',
-			\ '    d])',
+			\ ' a,',
+			\ ' b,',
+			\ ' c,',
+			\ ' d])',
 			\ 'm()',
 			\ ])
 
@@ -490,10 +504,10 @@ function! vimscript_indentexpr#run_tests() abort
 			\ 'm()',
 			\ ], [
 			\ 'F({}, [',
-			\ '    a,',
-			\ '    b,',
-			\ '    c,',
-			\ '    d])',
+			\ ' a,',
+			\ ' b,',
+			\ ' c,',
+			\ ' d])',
 			\ 'm()',
 			\ ])
 
@@ -506,10 +520,10 @@ function! vimscript_indentexpr#run_tests() abort
 			\ 'm()',
 			\ ], [
 			\ 'F([], [',
-			\ '    a,',
-			\ '    b,',
-			\ '    c,',
-			\ '    d])',
+			\ ' a,',
+			\ ' b,',
+			\ ' c,',
+			\ ' d])',
 			\ 'm()',
 			\ ])
 
@@ -521,8 +535,8 @@ function! vimscript_indentexpr#run_tests() abort
 			\ ':2',
 			\ ], [
 			\ 'let a = p',
-			\ '    ? 1',
-			\ '    : 2',
+			\ ' ? 1',
+			\ ' : 2',
 			\ 'echo 234',
 			\ ':2',
 			\ ])
@@ -536,10 +550,10 @@ function! vimscript_indentexpr#run_tests() abort
 			\ 'F()',
 			\ ], [
 			\ 'x',
-			\ '    ->method()',
-			\ '    ->method()',
-			\ '    ->method()',
-			\ '    ->method()',
+			\ ' ->method()',
+			\ ' ->method()',
+			\ ' ->method()',
+			\ ' ->method()',
 			\ 'F()',
 			\ ])
 
@@ -555,8 +569,8 @@ function! vimscript_indentexpr#run_tests() abort
 			\ ], [
 			\ 'if v:true',
 			\ '    let a = p',
-			\ '        ? 1',
-			\ '        : 2',
+			\ '     ? 1',
+			\ '     : 2',
 			\ '    echo 234',
 			\ '    :2',
 			\ '    echo 234',
