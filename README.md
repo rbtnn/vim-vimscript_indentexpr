@@ -25,7 +25,7 @@ Following examples are before/after when using `gg=G`.
 * __Augroup (legacy)__
 
     *before*
-    ```
+    ```vim
     augroup xxx
     autocmd!
     autocmd FileType vim
@@ -37,7 +37,7 @@ Following examples are before/after when using `gg=G`.
     augroup END
     ```
     *after*
-    ```
+    ```vim
     augroup xxx
         autocmd!
         autocmd FileType vim
@@ -52,7 +52,7 @@ Following examples are before/after when using `gg=G`.
 * __Heredoc (legacy)__
 
     *before*
-    ```
+    ```vim
     if v:true
     var lines =<< trim END
     text text text
@@ -68,7 +68,7 @@ Following examples are before/after when using `gg=G`.
     endif
     ```
     *after*
-    ```
+    ```vim
     if v:true
         var lines =<< trim END
     text text text
@@ -87,7 +87,7 @@ Following examples are before/after when using `gg=G`.
 * __Binary operators (Vim9)__
 
     *before*
-    ```
+    ```vim
     if v:true
     let a = p
     ? 1
@@ -98,7 +98,7 @@ Following examples are before/after when using `gg=G`.
     endif
     ```
     *after*
-    ```
+    ```vim
     if v:true
         let a = p
           ? 1
@@ -112,7 +112,7 @@ Following examples are before/after when using `gg=G`.
 * __Continues method (Vim9)__
 
     *before*
-    ```
+    ```vim
     x
     ->method()
     ->method()
@@ -121,7 +121,7 @@ Following examples are before/after when using `gg=G`.
     F()
     ```
     *after*
-    ```
+    ```vim
     x
       ->method()
       ->method()
@@ -133,7 +133,7 @@ Following examples are before/after when using `gg=G`.
 * __Def (Vim9)__
 
     *before*
-    ```
+    ```vim
     def outter()
     echo 12
     def inner()
@@ -142,7 +142,7 @@ Following examples are before/after when using `gg=G`.
     enddef
     ```
     *after*
-    ```
+    ```vim
     def outter()
         echo 12
         def inner()
@@ -154,14 +154,14 @@ Following examples are before/after when using `gg=G`.
 * __Continues parenthesis (Vim9)__
 
     *before*
-    ```
+    ```vim
     Func (
     arg
     )
     echo 123
     ```
     *after*
-    ```
+    ```vim
     Func (
       arg
       )
@@ -171,13 +171,13 @@ Following examples are before/after when using `gg=G`.
 * __Continues expr (Vim9)__
 
     *before*
-    ```
+    ```vim
     var total = m
     + n
     echo 123
     ```
     *after*
-    ```
+    ```vim
     var total = m
       + n
     echo 123
@@ -186,7 +186,7 @@ Following examples are before/after when using `gg=G`.
 * __Continues expr (Vim9)__
 
     *before*
-    ```
+    ```vim
     var xs = [
     a,
     b,
@@ -199,7 +199,7 @@ Following examples are before/after when using `gg=G`.
     m()
     ```
     *after*
-    ```
+    ```vim
     var xs = [
       a,
       b,
@@ -215,7 +215,7 @@ Following examples are before/after when using `gg=G`.
 * __Block (Vim9)__
 
     *before*
-    ```
+    ```vim
     {
     let n = a
     + b
@@ -223,7 +223,7 @@ Following examples are before/after when using `gg=G`.
     }
     ```
     *after*
-    ```
+    ```vim
     {
         let n = a
           + b
@@ -234,7 +234,7 @@ Following examples are before/after when using `gg=G`.
 * __Block (Vim9)__
 
     *before*
-    ```
+    ```vim
     var Lambda = (arg) =>
     {
     let n = a
@@ -244,7 +244,7 @@ Following examples are before/after when using `gg=G`.
     echo 123
     ```
     *after*
-    ```
+    ```vim
     var Lambda = (arg) =>
      {
          let n = a
@@ -253,12 +253,12 @@ Following examples are before/after when using `gg=G`.
      }
      echo 123
     ```
-    NOTE: This recognizes block but lambda and block.
+    NOTE: This recognizes Block but Lambda and Block.
 
 * __Lambda and Block (Vim9)__
 
     *before*
-    ```
+    ```vim
     var Lambda = (arg) => {
     let n = a
     + b
@@ -267,7 +267,7 @@ Following examples are before/after when using `gg=G`.
     echo 123
     ```
     *after*
-    ```
+    ```vim
     var Lambda = (arg) => {
          let n = a
            + b
@@ -279,7 +279,7 @@ Following examples are before/after when using `gg=G`.
 * __Dictionary (Vim9)__
 
     *before*
-    ```
+    ```vim
     if v:true
     popup_setoptions(winid, {
     "title": "xyz",
@@ -291,7 +291,7 @@ Following examples are before/after when using `gg=G`.
     endif
     ```
     *after*
-    ```
+    ```vim
     if v:true
         popup_setoptions(winid, {
               "title": "xyz",
