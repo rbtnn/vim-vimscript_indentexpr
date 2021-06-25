@@ -183,35 +183,6 @@ Following examples are before/after when using `gg=G`.
     echo 123
     ```
 
-* __Continues expr (Vim9)__
-
-    *before*
-    ```vim
-    var xs = [
-    a,
-    b,
-    c,
-    d], [
-    e,
-    f,
-    g,
-    h]
-    m()
-    ```
-    *after*
-    ```vim
-    var xs = [
-      a,
-      b,
-      c,
-      d], [
-      e,
-      f,
-      g,
-      h]
-    m()
-    ```
-
 * __Block (Vim9)__
 
     *before*

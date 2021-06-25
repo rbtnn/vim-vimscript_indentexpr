@@ -7,7 +7,6 @@ let s:TYPE_NORMAL = 'TYPE_NORMAL'
 let s:TYPE_ONELINER = 'TYPE_ONELINER'
 let s:TYPE_COMMENT = 'TYPE_COMMENT'
 let s:TYPE_CURR_CONTINUOUS = 'TYPE_CURR_CONTINUOUS'
-let s:TYPE_KEEP_CONTINUOUS = 'TYPE_KEEP_CONTINUOUS'
 let s:TYPE_NEXT_CONTINUOUS = 'TYPE_NEXT_CONTINUOUS'
 let s:TYPE_LAST_CONTINUOUS = 'TYPE_LAST_CONTINUOUS'
 let s:TYPE_BLOCK_CONTINUOUS = 'TYPE_BLOCK_CONTINUOUS'
@@ -56,54 +55,52 @@ function! vimscript_indentexpr#exec() abort
 		return indent - shiftwidth()
 	endif
 
-	if s:TYPE_KEEP_CONTINUOUS != curr_info['type']
-		if s:TYPE_BLOCK_CONTINUOUS == prev_info['type']
-			return indent + vim_indent_cont + shiftwidth()
-		elseif s:TYPE_ENDBLOCK_CONTINUOUS == prev_info['type']
+	if s:TYPE_BLOCK_CONTINUOUS == prev_info['type']
+		return indent + vim_indent_cont + shiftwidth()
+	elseif s:TYPE_ENDBLOCK_CONTINUOUS == prev_info['type']
+		let indent -= vim_indent_cont
+	elseif (s:TYPE_CURR_CONTINUOUS == curr_info['type']) || (s:TYPE_QUESTION == curr_info['type'])
+		if s:TYPE_CURR_CONTINUOUS != prev_info['type']
+			let indent += vim_indent_cont
+		endif
+	elseif s:TYPE_LAST_CONTINUOUS == prev_info['type']
+		let indent -= vim_indent_cont
+	else
+		if s:TYPE_COLLON == prev_info['type']
 			let indent -= vim_indent_cont
-		elseif (s:TYPE_CURR_CONTINUOUS == curr_info['type']) || (s:TYPE_QUESTION == curr_info['type'])
-			if s:TYPE_CURR_CONTINUOUS != prev_info['type']
-				let indent += vim_indent_cont
-			endif
-		elseif s:TYPE_LAST_CONTINUOUS == prev_info['type']
-			let indent -= vim_indent_cont
-		else
-			if s:TYPE_COLLON == prev_info['type']
-				let indent -= vim_indent_cont
 
-			elseif s:TYPE_CURR_CONTINUOUS == prev_info['type']
-				let indent -= vim_indent_cont
-			elseif s:TYPE_NEXT_CONTINUOUS == prev_info['type']
-				let indent += vim_indent_cont
-			endif
+		elseif s:TYPE_CURR_CONTINUOUS == prev_info['type']
+			let indent -= vim_indent_cont
+		elseif s:TYPE_NEXT_CONTINUOUS == prev_info['type']
+			let indent += vim_indent_cont
 		endif
 	endif
 
 	let p = (s:TYPE_FUNCTION == prev_info['type']) ||
-	  \ (s:TYPE_AUGROUP == prev_info['type']) ||
-	  \ (s:TYPE_WHILE == prev_info['type']) ||
-	  \ (s:TYPE_DEF == prev_info['type']) ||
-	  \ (s:TYPE_FOR == prev_info['type']) ||
-	  \ (s:TYPE_TRY == prev_info['type']) ||
-	  \ (s:TYPE_FINALLY == prev_info['type']) ||
-	  \ (s:TYPE_CATCH == prev_info['type']) ||
-	  \ (s:TYPE_IF == prev_info['type']) ||
-	  \ (s:TYPE_ELSE == prev_info['type']) ||
-	  \ (s:TYPE_ELSEIF == prev_info['type']) ||
-	  \ (s:TYPE_BLOCK == prev_info['type'])
+		\ (s:TYPE_AUGROUP == prev_info['type']) ||
+		\ (s:TYPE_WHILE == prev_info['type']) ||
+		\ (s:TYPE_DEF == prev_info['type']) ||
+		\ (s:TYPE_FOR == prev_info['type']) ||
+		\ (s:TYPE_TRY == prev_info['type']) ||
+		\ (s:TYPE_FINALLY == prev_info['type']) ||
+		\ (s:TYPE_CATCH == prev_info['type']) ||
+		\ (s:TYPE_IF == prev_info['type']) ||
+		\ (s:TYPE_ELSE == prev_info['type']) ||
+		\ (s:TYPE_ELSEIF == prev_info['type']) ||
+		\ (s:TYPE_BLOCK == prev_info['type'])
 
 	let c = (s:TYPE_ENDFUNCTION == curr_info['type']) ||
-	  \ (s:TYPE_ENDAUGROUP == curr_info['type']) ||
-	  \ (s:TYPE_ENDWHILE == curr_info['type']) ||
-	  \ (s:TYPE_ENDDEF == curr_info['type']) ||
-	  \ (s:TYPE_ENDFOR == curr_info['type']) ||
-	  \ (s:TYPE_FINALLY == curr_info['type']) ||
-	  \ (s:TYPE_CATCH == curr_info['type']) ||
-	  \ (s:TYPE_ENDTRY == curr_info['type']) ||
-	  \ (s:TYPE_ENDIF == curr_info['type']) ||
-	  \ (s:TYPE_ELSE == curr_info['type']) ||
-	  \ (s:TYPE_ELSEIF == curr_info['type']) ||
-	  \ (s:TYPE_ENDBLOCK == curr_info['type'])
+		\ (s:TYPE_ENDAUGROUP == curr_info['type']) ||
+		\ (s:TYPE_ENDWHILE == curr_info['type']) ||
+		\ (s:TYPE_ENDDEF == curr_info['type']) ||
+		\ (s:TYPE_ENDFOR == curr_info['type']) ||
+		\ (s:TYPE_FINALLY == curr_info['type']) ||
+		\ (s:TYPE_CATCH == curr_info['type']) ||
+		\ (s:TYPE_ENDTRY == curr_info['type']) ||
+		\ (s:TYPE_ENDIF == curr_info['type']) ||
+		\ (s:TYPE_ELSE == curr_info['type']) ||
+		\ (s:TYPE_ELSEIF == curr_info['type']) ||
+		\ (s:TYPE_ENDBLOCK == curr_info['type'])
 
 	if p == c
 		return indent
@@ -116,7 +113,7 @@ function! vimscript_indentexpr#exec() abort
 	endif
 endfunction
 
-function! vimscript_indentexpr#parse(line, lnum) abort
+function! vimscript_indentexpr#parse(line, lnum, prev_lnum) abort
 	let text = matchstr(a:line, '^\s*\(export\s\+\)\?\zs\S.*$')
 	let type = s:TYPE_NORMAL
 	if text =~# '^"'
@@ -132,36 +129,30 @@ function! vimscript_indentexpr#parse(line, lnum) abort
 	elseif s:ENABLE_VIM9 && (text =~# '=>$')
 		let type = s:TYPE_NEXT_CONTINUOUS
 
-	elseif s:ENABLE_VIM9 && (text =~# '\S\s*{$')
+	elseif s:ENABLE_VIM9 && (text =~# '\S\s*{$') && s:expect_pair('{', '}', a:lnum, a:prev_lnum, v:false, [(s:TYPE_ENDBLOCK), (s:TYPE_ENDBLOCK_CONTINUOUS)])
 		let type = s:TYPE_BLOCK_CONTINUOUS
 	elseif s:ENABLE_VIM9 && (text =~# '^{$')
 		let type = s:TYPE_BLOCK
 
-	elseif s:ENABLE_VIM9 && (text =~# '^}\s*\S') && s:expect_pair('{', '}', a:lnum, [(s:TYPE_BLOCK), (s:TYPE_BLOCK_CONTINUOUS)])
+	elseif s:ENABLE_VIM9 && (text =~# '^}\s*\S') && s:expect_pair('{', '}', a:lnum, a:prev_lnum, v:true, [(s:TYPE_BLOCK), (s:TYPE_BLOCK_CONTINUOUS)])
 		let type = s:TYPE_ENDBLOCK_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# '^}$') && s:expect_pair('{', '}', a:lnum, [(s:TYPE_BLOCK_CONTINUOUS)])
+	elseif s:ENABLE_VIM9 && (text =~# '^}$') && s:expect_pair('{', '}', a:lnum, a:prev_lnum, v:true, [(s:TYPE_BLOCK_CONTINUOUS)])
 		let type = s:TYPE_ENDBLOCK_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# '^}$') && s:expect_pair('{', '}', a:lnum, [(s:TYPE_BLOCK)])
+	elseif s:ENABLE_VIM9 && (text =~# '^}$') && s:expect_pair('{', '}', a:lnum, a:prev_lnum, v:true, [(s:TYPE_BLOCK)])
 		let type = s:TYPE_ENDBLOCK
 
 	elseif s:ENABLE_VIM9 && (text =~# '^?')
 		let type = s:TYPE_QUESTION
-	elseif s:ENABLE_VIM9 && (text =~# '^:') && s:expect_type([(s:TYPE_QUESTION)], a:lnum - 1)
+	elseif s:ENABLE_VIM9 && (text =~# '^:') && s:expect_type([(s:TYPE_QUESTION)], a:lnum - 1, a:prev_lnum)
 		let type = s:TYPE_COLLON
-
-	elseif s:ENABLE_VIM9 && (text =~# '\]\s*,\s*[{(\[]$') && s:expect_pair('(', ')', a:lnum, [(s:TYPE_NEXT_CONTINUOUS), (s:TYPE_KEEP_CONTINUOUS)])
-		let type = s:TYPE_KEEP_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# '\]\s*,\s*[{(\[]$') && s:expect_pair('\[', '\]', a:lnum, [(s:TYPE_NEXT_CONTINUOUS), (s:TYPE_KEEP_CONTINUOUS)])
-		let type = s:TYPE_KEEP_CONTINUOUS
-
 
 	elseif s:ENABLE_VIM9 && (text =~# '[{(\[]$')
 		let type = s:TYPE_NEXT_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# '}$') && s:expect_pair('{', '}', a:lnum, [(s:TYPE_NEXT_CONTINUOUS), (s:TYPE_KEEP_CONTINUOUS)])
+	elseif s:ENABLE_VIM9 && (text =~# '}$') && s:expect_pair('{', '}', a:lnum, a:prev_lnum, v:true, [(s:TYPE_NEXT_CONTINUOUS)])
 		let type = s:TYPE_LAST_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# ')$') && s:expect_pair('(', ')', a:lnum, [(s:TYPE_NEXT_CONTINUOUS), (s:TYPE_KEEP_CONTINUOUS)])
+	elseif s:ENABLE_VIM9 && (text =~# ')$') && s:expect_pair('(', ')', a:lnum, a:prev_lnum, v:true, [(s:TYPE_NEXT_CONTINUOUS)])
 		let type = s:TYPE_LAST_CONTINUOUS
-	elseif s:ENABLE_VIM9 && (text =~# '\]$') && s:expect_pair('\[', '\]', a:lnum, [(s:TYPE_NEXT_CONTINUOUS), (s:TYPE_KEEP_CONTINUOUS)])
+	elseif s:ENABLE_VIM9 && (text =~# '\]$') && s:expect_pair('\[', '\]', a:lnum, a:prev_lnum, v:true, [(s:TYPE_NEXT_CONTINUOUS)])
 		let type = s:TYPE_LAST_CONTINUOUS
 
 	elseif text =~# '^\<if\>.*\<endi\%[f\]\>$'
@@ -232,508 +223,504 @@ function! vimscript_indentexpr#run_tests() abort
 
 		let v:errors = []
 
-		call assert_equal(vimscript_indentexpr#parse('   if v:true | endif', -1), { 'type' : s:TYPE_ONELINER, })
-		call assert_equal(vimscript_indentexpr#parse('   for i in [1,2,3] | endfor', -1), { 'type' : s:TYPE_ONELINER, })
-		call assert_equal(vimscript_indentexpr#parse('   while v:true | endwhile', -1), { 'type' : s:TYPE_ONELINER, })
-		call assert_equal(vimscript_indentexpr#parse('   try | catch | endtry', -1), { 'type' : s:TYPE_ONELINER, })
-		call assert_equal(vimscript_indentexpr#parse('   "en', -1), { 'type' : s:TYPE_COMMENT, })
-		call assert_equal(vimscript_indentexpr#parse('   \en', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-		call assert_equal(vimscript_indentexpr#parse('   if v:true', -1), { 'type' : s:TYPE_IF, })
-		call assert_equal(vimscript_indentexpr#parse('   elseif v:true', -1), { 'type' : s:TYPE_ELSEIF, })
-		call assert_equal(vimscript_indentexpr#parse('   elsei v:true', -1), { 'type' : s:TYPE_ELSEIF, })
-		call assert_equal(vimscript_indentexpr#parse('   else', -1), { 'type' : s:TYPE_ELSE, })
-		call assert_equal(vimscript_indentexpr#parse('   el', -1), { 'type' : s:TYPE_ELSE, })
-		call assert_equal(vimscript_indentexpr#parse('   endif', -1), { 'type' : s:TYPE_ENDIF, })
-		call assert_equal(vimscript_indentexpr#parse('   en', -1), { 'type' : s:TYPE_ENDIF, })
-		call assert_equal(vimscript_indentexpr#parse('   for', -1), { 'type' : s:TYPE_FOR, })
-		call assert_equal(vimscript_indentexpr#parse('   endfor', -1), { 'type' : s:TYPE_ENDFOR, })
-		call assert_equal(vimscript_indentexpr#parse('   endfo', -1), { 'type' : s:TYPE_ENDFOR, })
-		call assert_equal(vimscript_indentexpr#parse('   function', -1), { 'type' : s:TYPE_FUNCTION, })
-		call assert_equal(vimscript_indentexpr#parse('   fu', -1), { 'type' : s:TYPE_FUNCTION, })
-		call assert_equal(vimscript_indentexpr#parse('   endfunction', -1), { 'type' : s:TYPE_ENDFUNCTION, })
-		call assert_equal(vimscript_indentexpr#parse('   augroup', -1), { 'type' : s:TYPE_AUGROUP, })
-		call assert_equal(vimscript_indentexpr#parse('   aug', -1), { 'type' : s:TYPE_AUGROUP, })
-		call assert_equal(vimscript_indentexpr#parse('   augroup end', -1), { 'type' : s:TYPE_ENDAUGROUP, })
-		call assert_equal(vimscript_indentexpr#parse('   aug end', -1), { 'type' : s:TYPE_ENDAUGROUP, })
-		call assert_equal(vimscript_indentexpr#parse('   augroup END', -1), { 'type' : s:TYPE_ENDAUGROUP, })
-		call assert_equal(vimscript_indentexpr#parse('   aug END', -1), { 'type' : s:TYPE_ENDAUGROUP, })
-		call assert_equal(vimscript_indentexpr#parse('   while v:true', -1), { 'type' : s:TYPE_WHILE, })
-		call assert_equal(vimscript_indentexpr#parse('   wh v:true', -1), { 'type' : s:TYPE_WHILE, })
-		call assert_equal(vimscript_indentexpr#parse('   endwhile', -1), { 'type' : s:TYPE_ENDWHILE, })
-		call assert_equal(vimscript_indentexpr#parse('   endw', -1), { 'type' : s:TYPE_ENDWHILE, })
-		call assert_equal(vimscript_indentexpr#parse('   try', -1), { 'type' : s:TYPE_TRY, })
-		call assert_equal(vimscript_indentexpr#parse('   catch', -1), { 'type' : s:TYPE_CATCH, })
-		call assert_equal(vimscript_indentexpr#parse('   finally', -1), { 'type' : s:TYPE_FINALLY, })
-		call assert_equal(vimscript_indentexpr#parse('   endtry', -1), { 'type' : s:TYPE_ENDTRY, })
+		call assert_equal(vimscript_indentexpr#parse('   if v:true | endif', -1, -1), { 'type' : s:TYPE_ONELINER, })
+		call assert_equal(vimscript_indentexpr#parse('   for i in [1,2,3] | endfor', -1, -1), { 'type' : s:TYPE_ONELINER, })
+		call assert_equal(vimscript_indentexpr#parse('   while v:true | endwhile', -1, -1), { 'type' : s:TYPE_ONELINER, })
+		call assert_equal(vimscript_indentexpr#parse('   try | catch | endtry', -1, -1), { 'type' : s:TYPE_ONELINER, })
+		call assert_equal(vimscript_indentexpr#parse('   "en', -1, -1), { 'type' : s:TYPE_COMMENT, })
+		call assert_equal(vimscript_indentexpr#parse('   \en', -1, -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+		call assert_equal(vimscript_indentexpr#parse('   if v:true', -1, -1), { 'type' : s:TYPE_IF, })
+		call assert_equal(vimscript_indentexpr#parse('   elseif v:true', -1, -1), { 'type' : s:TYPE_ELSEIF, })
+		call assert_equal(vimscript_indentexpr#parse('   elsei v:true', -1, -1), { 'type' : s:TYPE_ELSEIF, })
+		call assert_equal(vimscript_indentexpr#parse('   else', -1, -1), { 'type' : s:TYPE_ELSE, })
+		call assert_equal(vimscript_indentexpr#parse('   el', -1, -1), { 'type' : s:TYPE_ELSE, })
+		call assert_equal(vimscript_indentexpr#parse('   endif', -1, -1), { 'type' : s:TYPE_ENDIF, })
+		call assert_equal(vimscript_indentexpr#parse('   en', -1, -1), { 'type' : s:TYPE_ENDIF, })
+		call assert_equal(vimscript_indentexpr#parse('   for', -1, -1), { 'type' : s:TYPE_FOR, })
+		call assert_equal(vimscript_indentexpr#parse('   endfor', -1, -1), { 'type' : s:TYPE_ENDFOR, })
+		call assert_equal(vimscript_indentexpr#parse('   endfo', -1, -1), { 'type' : s:TYPE_ENDFOR, })
+		call assert_equal(vimscript_indentexpr#parse('   function', -1, -1), { 'type' : s:TYPE_FUNCTION, })
+		call assert_equal(vimscript_indentexpr#parse('   fu', -1, -1), { 'type' : s:TYPE_FUNCTION, })
+		call assert_equal(vimscript_indentexpr#parse('   endfunction', -1, -1), { 'type' : s:TYPE_ENDFUNCTION, })
+		call assert_equal(vimscript_indentexpr#parse('   augroup', -1, -1), { 'type' : s:TYPE_AUGROUP, })
+		call assert_equal(vimscript_indentexpr#parse('   aug', -1, -1), { 'type' : s:TYPE_AUGROUP, })
+		call assert_equal(vimscript_indentexpr#parse('   augroup end', -1, -1), { 'type' : s:TYPE_ENDAUGROUP, })
+		call assert_equal(vimscript_indentexpr#parse('   aug end', -1, -1), { 'type' : s:TYPE_ENDAUGROUP, })
+		call assert_equal(vimscript_indentexpr#parse('   augroup END', -1, -1), { 'type' : s:TYPE_ENDAUGROUP, })
+		call assert_equal(vimscript_indentexpr#parse('   aug END', -1, -1), { 'type' : s:TYPE_ENDAUGROUP, })
+		call assert_equal(vimscript_indentexpr#parse('   while v:true', -1, -1), { 'type' : s:TYPE_WHILE, })
+		call assert_equal(vimscript_indentexpr#parse('   wh v:true', -1, -1), { 'type' : s:TYPE_WHILE, })
+		call assert_equal(vimscript_indentexpr#parse('   endwhile', -1, -1), { 'type' : s:TYPE_ENDWHILE, })
+		call assert_equal(vimscript_indentexpr#parse('   endw', -1, -1), { 'type' : s:TYPE_ENDWHILE, })
+		call assert_equal(vimscript_indentexpr#parse('   try', -1, -1), { 'type' : s:TYPE_TRY, })
+		call assert_equal(vimscript_indentexpr#parse('   catch', -1, -1), { 'type' : s:TYPE_CATCH, })
+		call assert_equal(vimscript_indentexpr#parse('   finally', -1, -1), { 'type' : s:TYPE_FINALLY, })
+		call assert_equal(vimscript_indentexpr#parse('   endtry', -1, -1), { 'type' : s:TYPE_ENDTRY, })
 
 		if s:ENABLE_VIM9
-			call assert_equal(vimscript_indentexpr#parse('   def', -1), { 'type' : s:TYPE_DEF, })
-			call assert_equal(vimscript_indentexpr#parse('   enddef', -1), { 'type' : s:TYPE_ENDDEF, })
-			call assert_equal(vimscript_indentexpr#parse('   #en', -1), { 'type' : s:TYPE_COMMENT, })
-			call assert_equal(vimscript_indentexpr#parse('   Func (', -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   Func {', -1), { 'type' : s:TYPE_BLOCK_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   Func [', -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   + i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   - i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   * i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   / i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   % i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   && i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   || i', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   ->method()', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   .. str', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   .member', -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
-			call assert_equal(vimscript_indentexpr#parse('   {', -1), { 'type' : s:TYPE_BLOCK, })
+			call assert_equal(vimscript_indentexpr#parse('   def', -1, -1), { 'type' : s:TYPE_DEF, })
+			call assert_equal(vimscript_indentexpr#parse('   enddef', -1, -1), { 'type' : s:TYPE_ENDDEF, })
+			call assert_equal(vimscript_indentexpr#parse('   #en', -1, -1), { 'type' : s:TYPE_COMMENT, })
+			call assert_equal(vimscript_indentexpr#parse('   Func (', -1, -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   Func {', -1, -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   Func [', -1, -1), { 'type' : s:TYPE_NEXT_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   + i', -1, -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   - i', -1, -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   * i', -1, -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   / i', -1, -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   % i', -1, -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   && i', -1, -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   || i', -1, -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   ->method()', -1, -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   .. str', -1, -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   .member', -1, -1), { 'type' : s:TYPE_CURR_CONTINUOUS, })
+			call assert_equal(vimscript_indentexpr#parse('   {', -1, -1), { 'type' : s:TYPE_BLOCK, })
 		endif
 
 		let g:vim_indent_cont = 8
 
 		call s:run_test([
-		  \ 'let x = [',
-		  \ '\ 1,',
-		  \ '\ 2,',
-		  \ '\ ]',
-		  \ ], [
-		  \ 'let x = [',
-		  \ '        \ 1,',
-		  \ '        \ 2,',
-		  \ '        \ ]',
-		  \ ])
+			\ 'let x = [',
+			\ '\ 1,',
+			\ '\ 2,',
+			\ '\ ]',
+			\ ], [
+			\ 'let x = [',
+			\ '        \ 1,',
+			\ '        \ 2,',
+			\ '        \ ]',
+			\ ])
 
 		let g:vim_indent_cont = 2
 
 		if !has('nvim')
 			call s:run_test([
-			  \ 'if v:true',
-			  \ 'var lines =<< trim END',
-			  \ 'text text text',
-			  \ '   text text text',
-			  \ 'text text text',
-			  \ '       text text',
-			  \ '   text text text',
-			  \ '         text text text',
-			  \ 'END',
-			  \ 'echo 123',
-			  \ 'else',
-			  \ 'echo 456',
-			  \ 'endif',
-			  \ ], [
-			  \ 'if v:true',
-			  \ '    var lines =<< trim END',
-			  \ 'text text text',
-			  \ '   text text text',
-			  \ 'text text text',
-			  \ '       text text',
-			  \ '   text text text',
-			  \ '         text text text',
-			  \ 'END',
-			  \ '    echo 123',
-			  \ 'else',
-			  \ '    echo 456',
-			  \ 'endif',
-			  \ ])
+				\ 'if v:true',
+				\ 'var lines =<< trim END',
+				\ 'text text text',
+				\ '   text text text',
+				\ 'text text text',
+				\ '       text text',
+				\ '   text text text',
+				\ '         text text text',
+				\ 'END',
+				\ 'echo 123',
+				\ 'else',
+				\ 'echo 456',
+				\ 'endif',
+				\ ], [
+				\ 'if v:true',
+				\ '    var lines =<< trim END',
+				\ 'text text text',
+				\ '   text text text',
+				\ 'text text text',
+				\ '       text text',
+				\ '   text text text',
+				\ '         text text text',
+				\ 'END',
+				\ '    echo 123',
+				\ 'else',
+				\ '    echo 456',
+				\ 'endif',
+				\ ])
 		endif
 
 		call s:run_test([
-		  \ 'augroup! xxx',
-		  \ 'echo 12',
-		  \ ], [
-		  \ 'augroup! xxx',
-		  \ 'echo 12',
-		  \ ])
+			\ 'for n in range(1, 8)',
+			\ 'call popup_create(" ", {',
+			\ '\ "highlight": "aaa",',
+			\ '\ "pos": "botleft",',
+			\ '\ "line": 1,',
+			\ '\ "col": 1,',
+			\ '\ })',
+			\ 'endfor',
+			\ ], [
+			\ 'for n in range(1, 8)',
+			\ '    call popup_create(" ", {',
+			\ '      \ "highlight": "aaa",',
+			\ '      \ "pos": "botleft",',
+			\ '      \ "line": 1,',
+			\ '      \ "col": 1,',
+			\ '      \ })',
+			\ 'endfor',
+			\ ])
 
 		call s:run_test([
-		  \ 'if 1',
-		  \ 'echo 12',
-		  \ 'endif',
-		  \ ], [
-		  \ 'if 1',
-		  \ '    echo 12',
-		  \ 'endif',
-		  \ ])
+			\ 'augroup! xxx',
+			\ 'echo 12',
+			\ ], [
+			\ 'augroup! xxx',
+			\ 'echo 12',
+			\ ])
 
 		call s:run_test([
-		  \ 'try',
-		  \ 'echo 12',
-		  \ 'catch',
-		  \ 'echo 12',
-		  \ 'finally',
-		  \ 'echo 12',
-		  \ 'endtry',
-		  \ 'try',
-		  \ 'catch',
-		  \ 'finally',
-		  \ 'endtry',
-		  \ ], [
-		  \ 'try',
-		  \ '    echo 12',
-		  \ 'catch',
-		  \ '    echo 12',
-		  \ 'finally',
-		  \ '    echo 12',
-		  \ 'endtry',
-		  \ 'try',
-		  \ 'catch',
-		  \ 'finally',
-		  \ 'endtry',
-		  \ ])
+			\ 'if 1',
+			\ 'echo 12',
+			\ 'endif',
+			\ ], [
+			\ 'if 1',
+			\ '    echo 12',
+			\ 'endif',
+			\ ])
 
 		call s:run_test([
-		  \ 'if 1',
-		  \ 'echo 12',
-		  \ 'elseif 2',
-		  \ 'echo 12',
-		  \ 'else',
-		  \ 'echo 12',
-		  \ 'endif',
-		  \ 'if 1',
-		  \ 'elseif 2',
-		  \ 'else',
-		  \ 'endif',
-		  \ ], [
-		  \ 'if 1',
-		  \ '    echo 12',
-		  \ 'elseif 2',
-		  \ '    echo 12',
-		  \ 'else',
-		  \ '    echo 12',
-		  \ 'endif',
-		  \ 'if 1',
-		  \ 'elseif 2',
-		  \ 'else',
-		  \ 'endif',
-		  \ ])
+			\ 'try',
+			\ 'echo 12',
+			\ 'catch',
+			\ 'echo 12',
+			\ 'finally',
+			\ 'echo 12',
+			\ 'endtry',
+			\ 'try',
+			\ 'catch',
+			\ 'finally',
+			\ 'endtry',
+			\ ], [
+			\ 'try',
+			\ '    echo 12',
+			\ 'catch',
+			\ '    echo 12',
+			\ 'finally',
+			\ '    echo 12',
+			\ 'endtry',
+			\ 'try',
+			\ 'catch',
+			\ 'finally',
+			\ 'endtry',
+			\ ])
 
 		call s:run_test([
-		  \ 'while 1',
-		  \ 'echo 12',
-		  \ 'endwhile',
-		  \ 'while 1',
-		  \ 'endwhile',
-		  \ ], [
-		  \ 'while 1',
-		  \ '    echo 12',
-		  \ 'endwhile',
-		  \ 'while 1',
-		  \ 'endwhile',
-		  \ ])
+			\ 'if 1',
+			\ 'echo 12',
+			\ 'elseif 2',
+			\ 'echo 12',
+			\ 'else',
+			\ 'echo 12',
+			\ 'endif',
+			\ 'if 1',
+			\ 'elseif 2',
+			\ 'else',
+			\ 'endif',
+			\ ], [
+			\ 'if 1',
+			\ '    echo 12',
+			\ 'elseif 2',
+			\ '    echo 12',
+			\ 'else',
+			\ '    echo 12',
+			\ 'endif',
+			\ 'if 1',
+			\ 'elseif 2',
+			\ 'else',
+			\ 'endif',
+			\ ])
 
 		call s:run_test([
-		  \ 'for i in [1,2,3]',
-		  \ 'echo 12',
-		  \ 'endfor',
-		  \ 'for i in [1,2,3]',
-		  \ 'endfor',
-		  \ ], [
-		  \ 'for i in [1,2,3]',
-		  \ '    echo 12',
-		  \ 'endfor',
-		  \ 'for i in [1,2,3]',
-		  \ 'endfor',
-		  \ ])
+			\ 'while 1',
+			\ 'echo 12',
+			\ 'endwhile',
+			\ 'while 1',
+			\ 'endwhile',
+			\ ], [
+			\ 'while 1',
+			\ '    echo 12',
+			\ 'endwhile',
+			\ 'while 1',
+			\ 'endwhile',
+			\ ])
 
 		call s:run_test([
-		  \ 'augroup xxx',
-		  \ 'autocmd!',
-		  \ 'autocmd FileType vim',
-		  \ '\ : if 1',
-		  \ '\ |     echo 12',
-		  \ '\ | else',
-		  \ '\ |     echo 12',
-		  \ '\ | endif',
-		  \ 'augroup END',
-		  \ 'augroup xxx',
-		  \ 'augroup END',
-		  \ ], [
-		  \ 'augroup xxx',
-		  \ '    autocmd!',
-		  \ '    autocmd FileType vim',
-		  \ '      \ : if 1',
-		  \ '      \ |     echo 12',
-		  \ '      \ | else',
-		  \ '      \ |     echo 12',
-		  \ '      \ | endif',
-		  \ 'augroup END',
-		  \ 'augroup xxx',
-		  \ 'augroup END',
-		  \ ])
+			\ 'for i in [1,2,3]',
+			\ 'echo 12',
+			\ 'endfor',
+			\ 'for i in [1,2,3]',
+			\ 'endfor',
+			\ ], [
+			\ 'for i in [1,2,3]',
+			\ '    echo 12',
+			\ 'endfor',
+			\ 'for i in [1,2,3]',
+			\ 'endfor',
+			\ ])
+
+		call s:run_test([
+			\ 'augroup xxx',
+			\ 'autocmd!',
+			\ 'autocmd FileType vim',
+			\ '\ : if 1',
+			\ '\ |     echo 12',
+			\ '\ | else',
+			\ '\ |     echo 12',
+			\ '\ | endif',
+			\ 'augroup END',
+			\ 'augroup xxx',
+			\ 'augroup END',
+			\ ], [
+			\ 'augroup xxx',
+			\ '    autocmd!',
+			\ '    autocmd FileType vim',
+			\ '      \ : if 1',
+			\ '      \ |     echo 12',
+			\ '      \ | else',
+			\ '      \ |     echo 12',
+			\ '      \ | endif',
+			\ 'augroup END',
+			\ 'augroup xxx',
+			\ 'augroup END',
+			\ ])
 
 		if s:ENABLE_VIM9
 			call s:run_test([
-			  \ 'def outter()',
-			  \ 'echo 12',
-			  \ 'def inner()',
-			  \ 'echo 34',
-			  \ 'enddef',
-			  \ 'enddef',
-			  \ ], [
-			  \ 'def outter()',
-			  \ '    echo 12',
-			  \ '    def inner()',
-			  \ '        echo 34',
-			  \ '    enddef',
-			  \ 'enddef',
-			  \ ])
+				\ 'def outter()',
+				\ 'echo 12',
+				\ 'def inner()',
+				\ 'echo 34',
+				\ 'enddef',
+				\ 'enddef',
+				\ ], [
+				\ 'def outter()',
+				\ '    echo 12',
+				\ '    def inner()',
+				\ '        echo 34',
+				\ '    enddef',
+				\ 'enddef',
+				\ ])
 
 			call s:run_test([
-			  \ 'filter(list, (k, v) =>',
-			  \ 'v > 0)',
-			  \ ], [
-			  \ 'filter(list, (k, v) =>',
-			  \ '  v > 0)',
-			  \ ])
+				\ 'filter(list, (k, v) =>',
+				\ 'v > 0)',
+				\ ], [
+				\ 'filter(list, (k, v) =>',
+				\ '  v > 0)',
+				\ ])
 
 			call s:run_test([
-			  \ 'Func (',
-			  \ 'arg)',
-			  \ 'echo 123',
-			  \ ], [
-			  \ 'Func (',
-			  \ '  arg)',
-			  \ 'echo 123',
-			  \ ])
+				\ 'Func (',
+				\ 'arg)',
+				\ 'echo 123',
+				\ ], [
+				\ 'Func (',
+				\ '  arg)',
+				\ 'echo 123',
+				\ ])
 
 			call s:run_test([
-			  \ 'Func (',
-			  \ 'arg',
-			  \ ')',
-			  \ 'echo 123',
-			  \ ], [
-			  \ 'Func (',
-			  \ '  arg',
-			  \ '  )',
-			  \ 'echo 123',
-			  \ ])
+				\ 'Func (',
+				\ 'arg',
+				\ ')',
+				\ 'echo 123',
+				\ ], [
+				\ 'Func (',
+				\ '  arg',
+				\ '  )',
+				\ 'echo 123',
+				\ ])
 
 			call s:run_test([
-			  \ 'var total = m',
-			  \ '+ n',
-			  \ 'echo 123',
-			  \ ], [
-			  \ 'var total = m',
-			  \ '  + n',
-			  \ 'echo 123',
-			  \ ])
+				\ 'var total = m',
+				\ '+ n',
+				\ 'echo 123',
+				\ ], [
+				\ 'var total = m',
+				\ '  + n',
+				\ 'echo 123',
+				\ ])
 
 			call s:run_test([
-			  \ 'var xs = [',
-			  \ 'a,',
-			  \ 'b,',
-			  \ 'c,',
-			  \ 'd]',
-			  \ 'm()',
-			  \ ], [
-			  \ 'var xs = [',
-			  \ '  a,',
-			  \ '  b,',
-			  \ '  c,',
-			  \ '  d]',
-			  \ 'm()',
-			  \ ])
+				\ 'var xs = [',
+				\ 'a,',
+				\ 'b,',
+				\ 'c,',
+				\ 'd]',
+				\ 'm()',
+				\ ], [
+				\ 'var xs = [',
+				\ '  a,',
+				\ '  b,',
+				\ '  c,',
+				\ '  d]',
+				\ 'm()',
+				\ ])
 
 			call s:run_test([
-			  \ 'var xs = [',
-			  \ 'a,',
-			  \ 'b,',
-			  \ 'c,',
-			  \ 'd], [',
-			  \ 'e,',
-			  \ 'f,',
-			  \ 'g,',
-			  \ 'h]',
-			  \ 'm()',
-			  \ ], [
-			  \ 'var xs = [',
-			  \ '  a,',
-			  \ '  b,',
-			  \ '  c,',
-			  \ '  d], [',
-			  \ '  e,',
-			  \ '  f,',
-			  \ '  g,',
-			  \ '  h]',
-			  \ 'm()',
-			  \ ])
+				\ 'F((1,2,3), [',
+				\ 'a,',
+				\ 'b,',
+				\ 'c,',
+				\ 'd])',
+				\ 'm()',
+				\ ], [
+				\ 'F((1,2,3), [',
+				\ '  a,',
+				\ '  b,',
+				\ '  c,',
+				\ '  d])',
+				\ 'm()',
+				\ ])
 
 			call s:run_test([
-			  \ 'F((1,2,3), [',
-			  \ 'a,',
-			  \ 'b,',
-			  \ 'c,',
-			  \ 'd])',
-			  \ 'm()',
-			  \ ], [
-			  \ 'F((1,2,3), [',
-			  \ '  a,',
-			  \ '  b,',
-			  \ '  c,',
-			  \ '  d])',
-			  \ 'm()',
-			  \ ])
+				\ 'F({}, [',
+				\ 'a,',
+				\ 'b,',
+				\ 'c,',
+				\ 'd])',
+				\ 'm()',
+				\ ], [
+				\ 'F({}, [',
+				\ '  a,',
+				\ '  b,',
+				\ '  c,',
+				\ '  d])',
+				\ 'm()',
+				\ ])
 
 			call s:run_test([
-			  \ 'F({}, [',
-			  \ 'a,',
-			  \ 'b,',
-			  \ 'c,',
-			  \ 'd])',
-			  \ 'm()',
-			  \ ], [
-			  \ 'F({}, [',
-			  \ '  a,',
-			  \ '  b,',
-			  \ '  c,',
-			  \ '  d])',
-			  \ 'm()',
-			  \ ])
+				\ 'F([], [',
+				\ 'a,',
+				\ 'b,',
+				\ 'c,',
+				\ 'd])',
+				\ 'm()',
+				\ ], [
+				\ 'F([], [',
+				\ '  a,',
+				\ '  b,',
+				\ '  c,',
+				\ '  d])',
+				\ 'm()',
+				\ ])
 
 			call s:run_test([
-			  \ 'F([], [',
-			  \ 'a,',
-			  \ 'b,',
-			  \ 'c,',
-			  \ 'd])',
-			  \ 'm()',
-			  \ ], [
-			  \ 'F([], [',
-			  \ '  a,',
-			  \ '  b,',
-			  \ '  c,',
-			  \ '  d])',
-			  \ 'm()',
-			  \ ])
+				\ 'let a = p',
+				\ '? 1',
+				\ ': 2',
+				\ 'echo 234',
+				\ ':2',
+				\ ], [
+				\ 'let a = p',
+				\ '  ? 1',
+				\ '  : 2',
+				\ 'echo 234',
+				\ ':2',
+				\ ])
 
 			call s:run_test([
-			  \ 'let a = p',
-			  \ '? 1',
-			  \ ': 2',
-			  \ 'echo 234',
-			  \ ':2',
-			  \ ], [
-			  \ 'let a = p',
-			  \ '  ? 1',
-			  \ '  : 2',
-			  \ 'echo 234',
-			  \ ':2',
-			  \ ])
+				\ 'x',
+				\ '->method()',
+				\ '->method()',
+				\ '->method()',
+				\ '->method()',
+				\ 'F()',
+				\ ], [
+				\ 'x',
+				\ '  ->method()',
+				\ '  ->method()',
+				\ '  ->method()',
+				\ '  ->method()',
+				\ 'F()',
+				\ ])
 
 			call s:run_test([
-			  \ 'x',
-			  \ '->method()',
-			  \ '->method()',
-			  \ '->method()',
-			  \ '->method()',
-			  \ 'F()',
-			  \ ], [
-			  \ 'x',
-			  \ '  ->method()',
-			  \ '  ->method()',
-			  \ '  ->method()',
-			  \ '  ->method()',
-			  \ 'F()',
-			  \ ])
+				\ 'if v:true',
+				\ 'let a = p',
+				\ '? 1',
+				\ ': 2',
+				\ 'echo 234',
+				\ ':2',
+				\ 'echo 234',
+				\ 'endif',
+				\ ], [
+				\ 'if v:true',
+				\ '    let a = p',
+				\ '      ? 1',
+				\ '      : 2',
+				\ '    echo 234',
+				\ '    :2',
+				\ '    echo 234',
+				\ 'endif',
+				\ ])
 
 			call s:run_test([
-			  \ 'if v:true',
-			  \ 'let a = p',
-			  \ '? 1',
-			  \ ': 2',
-			  \ 'echo 234',
-			  \ ':2',
-			  \ 'echo 234',
-			  \ 'endif',
-			  \ ], [
-			  \ 'if v:true',
-			  \ '    let a = p',
-			  \ '      ? 1',
-			  \ '      : 2',
-			  \ '    echo 234',
-			  \ '    :2',
-			  \ '    echo 234',
-			  \ 'endif',
-			  \ ])
+				\ '{',
+				\ 'echo 234',
+				\ '}',
+				\ ], [
+				\ '{',
+				\ '    echo 234',
+				\ '}',
+				\ ])
 
 			call s:run_test([
-			  \ '{',
-			  \ 'echo 234',
-			  \ '}',
-			  \ ], [
-			  \ '{',
-			  \ '    echo 234',
-			  \ '}',
-			  \ ])
+				\ 'var Lambda = (arg) => {',
+				\ 'let n = a',
+				\ '+ b',
+				\ 'return n',
+				\ '}',
+				\ ], [
+				\ 'var Lambda = (arg) => {',
+				\ '      let n = a',
+				\ '        + b',
+				\ '      return n',
+				\ '  }',
+				\ ])
 
 			call s:run_test([
-			  \ 'var Lambda = (arg) => {',
-			  \ 'let n = a',
-			  \ '+ b',
-			  \ 'return n',
-			  \ '}',
-			  \ ], [
-			  \ 'var Lambda = (arg) => {',
-			  \ '      let n = a',
-			  \ '        + b',
-			  \ '      return n',
-			  \ '  }',
-			  \ ])
+				\ 'var Lambda = (arg) =>',
+				\ '{',
+				\ 'let n = a',
+				\ '+ b',
+				\ 'return n',
+				\ '}',
+				\ 'M()',
+				\ ], [
+				\ 'var Lambda = (arg) =>',
+				\ '  {',
+				\ '      let n = a',
+				\ '        + b',
+				\ '      return n',
+				\ '  }',
+				\ '  M()',
+				\ ])
 
 			call s:run_test([
-			  \ 'var Lambda = (arg) =>',
-			  \ '{',
-			  \ 'let n = a',
-			  \ '+ b',
-			  \ 'return n',
-			  \ '}',
-			  \ 'M()',
-			  \ ], [
-			  \ 'var Lambda = (arg) =>',
-			  \ '  {',
-			  \ '      let n = a',
-			  \ '        + b',
-			  \ '      return n',
-			  \ '  }',
-			  \ '  M()',
-			  \ ])
+				\ 'aaaa({',
+				\ 'let n = a',
+				\ '+ b',
+				\ 'return n',
+				\ '})->method()',
+				\ 'M()',
+				\ ], [
+				\ 'aaaa({',
+				\ '      let n = a',
+				\ '        + b',
+				\ '      return n',
+				\ '  })->method()',
+				\ 'M()',
+				\ ])
 
 			call s:run_test([
-			  \ 'aaaa({',
-			  \ 'let n = a',
-			  \ '+ b',
-			  \ 'return n',
-			  \ '})->method()',
-			  \ 'M()',
-			  \ ], [
-			  \ 'aaaa({',
-			  \ '      let n = a',
-			  \ '        + b',
-			  \ '      return n',
-			  \ '  })->method()',
-			  \ 'M()',
-			  \ ])
-
-			call s:run_test([
-			  \ 'if v:true',
-			  \ 'popup_setoptions(winid, {',
-			  \ '"title": "abc",',
-			  \ '})',
-			  \ 'else',
-			  \ 'popup_setoptions(winid, {',
-			  \ '"title": "abc",',
-			  \ '})',
-			  \ 'M()',
-			  \ 'endif',
-			  \ ], [
-			  \ 'if v:true',
-			  \ '    popup_setoptions(winid, {',
-			  \ '          "title": "abc",',
-			  \ '      })',
-			  \ 'else',
-			  \ '    popup_setoptions(winid, {',
-			  \ '          "title": "abc",',
-			  \ '      })',
-			  \ '    M()',
-			  \ 'endif',
-			  \ ])
+				\ 'if v:true',
+				\ 'popup_setoptions(winid, {',
+				\ '"title": "abc",',
+				\ '})',
+				\ 'else',
+				\ 'popup_setoptions(winid, {',
+				\ '"title": "abc",',
+				\ '})',
+				\ 'M()',
+				\ 'endif',
+				\ ], [
+				\ 'if v:true',
+				\ '    popup_setoptions(winid, {',
+				\ '          "title": "abc",',
+				\ '      })',
+				\ 'else',
+				\ '    popup_setoptions(winid, {',
+				\ '          "title": "abc",',
+				\ '      })',
+				\ '    M()',
+				\ 'endif',
+				\ ])
 		endif
 
 		if !empty(v:errors)
@@ -743,10 +730,10 @@ function! vimscript_indentexpr#run_tests() abort
 				echohl Error
 				if 3 == len(xs)
 					let lines += [
-					  \ xs[0],
-					  \ '  Expected ' .. xs[1],
-					  \ '  but got  ' .. xs[2],
-					  \ ]
+						\ xs[0],
+						\ '  Expected ' .. xs[1],
+						\ '  but got  ' .. xs[2],
+						\ ]
 					echo xs[0]
 					echo '  Expected ' .. xs[1]
 					echo '  but got  ' .. xs[2]
@@ -767,20 +754,28 @@ endfunction
 
 
 
-function! s:expect_pair(st, ed, n, ts) abort
+function! s:expect_pair(st, ed, n, prev_n, is_back, ts) abort
 	let saved = getcurpos()
 	call setpos('.', [0, a:n, 0, 0])
-	let lnum = searchpairpos(a:st, '', a:ed, 'bn')[0]
+	if a:is_back
+		execute 'normal $F' .. a:ed
+		let lnum = searchpairpos(a:st, '', a:ed, 'bn')[0]
+	else
+		execute 'normal $F' .. a:st
+		let lnum = searchpairpos(a:st, '', a:ed, 'n')[0]
+	endif
 	call setpos('.', saved)
-	if (1 <= lnum) && (lnum <= line('$')) && (a:n != lnum)
-		return s:expect_type(a:ts, lnum)
+	if a:prev_n == lnum
+		return v:true
+	elseif (1 <= lnum) && (lnum <= line('$')) && (a:n != lnum)
+		return s:expect_type(a:ts, lnum, a:n)
 	else
 		return v:false
 	endif
 endfunction
 
-function! s:expect_type(ts, n) abort
-	let x = vimscript_indentexpr#parse(getline(a:n), a:n)
+function! s:expect_type(ts, n, prev_n) abort
+	let x = vimscript_indentexpr#parse(getline(a:n), a:n, a:prev_n)
 	return -1 != index(a:ts, x['type'])
 endfunction
 
@@ -791,7 +786,7 @@ function! s:prev(lnum) abort
 	endwhile
 	let syn_name = synIDattr(synID(prev_lnum, 1, 1), 'name')
 	let line = getline(prev_lnum)
-	let t = vimscript_indentexpr#parse(line, prev_lnum)['type']
+	let t = vimscript_indentexpr#parse(line, prev_lnum, -1)['type']
 	let indent = indent(prev_lnum)
 	return { 'syn_name' : syn_name, 'type' : t, 'indent' : indent, }
 endfunction
@@ -799,7 +794,7 @@ endfunction
 function! s:curr(lnum) abort
 	let syn_name = synIDattr(synID(a:lnum, 1, 1), 'name')
 	let line = getline(a:lnum)
-	let t = vimscript_indentexpr#parse(line, -1)['type']
+	let t = vimscript_indentexpr#parse(line, -1, -1)['type']
 	return { 'syn_name' : syn_name, 'type' : t, }
 endfunction
 
