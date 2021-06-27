@@ -67,7 +67,11 @@ let s:END_LIST = [
  \ s:TYPE_ENDBLOCK,
  \ ]
 
-function! vimscript_indentexpr#xxx(lnum) abort
+function! vimscript_indentexpr#exec() abort
+	return vimscript_indentexpr#sub(v:lnum)
+endfunction
+
+function! vimscript_indentexpr#sub(lnum) abort
 	let curr_type = vimscript_indentexpr#get_type(getline(a:lnum), a:lnum)
 	if 1 == a:lnum
 		return 0
@@ -102,16 +106,10 @@ function! vimscript_indentexpr#xxx(lnum) abort
 	endif
 endfunction
 
-nnoremap <C-f> :<C-u>echo vimscript_indentexpr#get_type(getline('.'), line('.'))<cr>
-
-function! vimscript_indentexpr#exec() abort
-	return vimscript_indentexpr#xxx(v:lnum)
-endfunction
-
 function! vimscript_indentexpr#get_type(line, lnum) abort
 	let text = matchstr(a:line, '^\s*\(export\s\+\)\?\zs\S.*$')
 	let t = s:TYPE_NORMAL
-	if -1 != index(['vimLetHereDoc', 'vimLetHereDocStop'], synIDattr(synID(a:lnum, 1, 1), 'name'))
+	if (-1 != a:lnum) && (-1 != index(['vimLetHereDoc', 'vimLetHereDocStop'], synIDattr(synID(a:lnum, 1, 1), 'name')))
 		let t = s:TYPE_HEREDOC
 	elseif text =~# '^"'
 		let t = s:TYPE_COMMENT
@@ -127,7 +125,7 @@ function! vimscript_indentexpr#get_type(line, lnum) abort
 		let t = s:TYPE_ENDBLOCK
 	elseif s:ENABLE_VIM9 && (text =~# '^?')
 		let t = s:TYPE_QUESTION
-	elseif s:ENABLE_VIM9 && (text =~# '^:') && (s:TYPE_QUESTION == vimscript_indentexpr#get_type(getline(a:lnum - 1), a:lnum - 1))
+	elseif s:ENABLE_VIM9 && ((-1 != a:lnum) && (text =~# '^:') && (s:TYPE_QUESTION == vimscript_indentexpr#get_type(getline(a:lnum - 1), a:lnum - 1)))
 		let t = s:TYPE_COLLON
 	elseif text =~# '^\<if\>.*\<endi\%[f\]\>$'
 		let t = s:TYPE_ONELINER
