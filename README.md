@@ -151,7 +151,7 @@ Following examples are before/after when using `gg=G`.
     enddef
     ```
 
-* __Continues parenthesis (Vim9)__
+* __Continues parenthesis (Vim9)__ {not implemented yet}
 
     *before*
     ```vim
@@ -202,7 +202,7 @@ Following examples are before/after when using `gg=G`.
     }
     ```
 
-* __Block (Vim9)__
+* __Block (Vim9)__ {not implemented yet}
 
     *before*
     ```vim
@@ -226,7 +226,7 @@ Following examples are before/after when using `gg=G`.
     ```
     NOTE: This recognizes Block but Lambda and Block.
 
-* __Lambda and Block (Vim9)__
+* __Lambda and Block (Vim9)__ {not implemented yet}
 
     *before*
     ```vim
@@ -247,7 +247,7 @@ Following examples are before/after when using `gg=G`.
     echo 123
     ```
 
-* __Dictionary (Vim9)__
+* __Dictionary (Vim9)__ {not implemented yet}
 
     *before*
     ```vim
