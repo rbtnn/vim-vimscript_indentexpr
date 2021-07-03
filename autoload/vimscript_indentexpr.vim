@@ -32,40 +32,40 @@ let s:TYPE_BLOCK = 'TYPE_BLOCK'
 let s:TYPE_ENDBLOCK = 'TYPE_ENDBLOCK'
 
 let s:CONTINUOUS_LIST = [
- \ s:TYPE_QUESTION,
- \ s:TYPE_COLLON,
- \ s:TYPE_CONTINUOUS,
- \ ]
+	\ s:TYPE_QUESTION,
+	\ s:TYPE_COLLON,
+	\ s:TYPE_CONTINUOUS,
+	\ ]
 
 let s:BEGIN_LIST = [
- \ s:TYPE_FUNCTION,
- \ s:TYPE_AUGROUP,
- \ s:TYPE_WHILE,
- \ s:TYPE_DEF,
- \ s:TYPE_FOR,
- \ s:TYPE_TRY,
- \ s:TYPE_FINALLY,
- \ s:TYPE_CATCH,
- \ s:TYPE_IF,
- \ s:TYPE_ELSE,
- \ s:TYPE_ELSEIF,
- \ s:TYPE_BLOCK,
- \ ]
+	\ s:TYPE_FUNCTION,
+	\ s:TYPE_AUGROUP,
+	\ s:TYPE_WHILE,
+	\ s:TYPE_DEF,
+	\ s:TYPE_FOR,
+	\ s:TYPE_TRY,
+	\ s:TYPE_FINALLY,
+	\ s:TYPE_CATCH,
+	\ s:TYPE_IF,
+	\ s:TYPE_ELSE,
+	\ s:TYPE_ELSEIF,
+	\ s:TYPE_BLOCK,
+	\ ]
 
 let s:END_LIST = [
- \ s:TYPE_ENDFUNCTION,
- \ s:TYPE_ENDAUGROUP,
- \ s:TYPE_ENDWHILE,
- \ s:TYPE_ENDDEF,
- \ s:TYPE_ENDFOR,
- \ s:TYPE_FINALLY,
- \ s:TYPE_CATCH,
- \ s:TYPE_ENDTRY,
- \ s:TYPE_ENDIF,
- \ s:TYPE_ELSE,
- \ s:TYPE_ELSEIF,
- \ s:TYPE_ENDBLOCK,
- \ ]
+	\ s:TYPE_ENDFUNCTION,
+	\ s:TYPE_ENDAUGROUP,
+	\ s:TYPE_ENDWHILE,
+	\ s:TYPE_ENDDEF,
+	\ s:TYPE_ENDFOR,
+	\ s:TYPE_FINALLY,
+	\ s:TYPE_CATCH,
+	\ s:TYPE_ENDTRY,
+	\ s:TYPE_ENDIF,
+	\ s:TYPE_ELSE,
+	\ s:TYPE_ELSEIF,
+	\ s:TYPE_ENDBLOCK,
+	\ ]
 
 function! vimscript_indentexpr#exec() abort
 	return vimscript_indentexpr#sub(v:lnum)
@@ -94,7 +94,9 @@ function! vimscript_indentexpr#sub(lnum) abort
 		endwhile
 		let n = indent(prev_lnum)
 		if -1 != index(s:END_LIST, curr_type)
-			let n -= shiftwidth()
+			if -1 == index(s:BEGIN_LIST, prev_type)
+				let n -= shiftwidth()
+			endif
 		elseif -1 != index(s:CONTINUOUS_LIST, curr_type)
 			let n += get(g:, 'vim_indent_cont', shiftwidth() * 3)
 		else
@@ -247,309 +249,309 @@ function! vimscript_indentexpr#run_tests() abort
 		let g:vim_indent_cont = 0
 
 		call s:run_test([
-		 \ 'let x = [',
-		 \ '\ 1,',
-		 \ '\ 2,',
-		 \ '\ ]',
-		 \ ], [
-		 \ 'let x = [',
-		 \ '\ 1,',
-		 \ '\ 2,',
-		 \ '\ ]',
-		 \ ])
+			\ 'let x = [',
+			\ '\ 1,',
+			\ '\ 2,',
+			\ '\ ]',
+			\ ], [
+			\ 'let x = [',
+			\ '\ 1,',
+			\ '\ 2,',
+			\ '\ ]',
+			\ ])
 
 		call s:run_test([
-		 \ 'if foo',
-		 \ '\ . bar',
-		 \ 'echo "hi"',
-		 \ 'endif',
-		 \ ], [
-		 \ 'if foo',
-		 \ '\ . bar',
-		 \ '    echo "hi"',
-		 \ 'endif',
-		 \ ])
+			\ 'if foo',
+			\ '\ . bar',
+			\ 'echo "hi"',
+			\ 'endif',
+			\ ], [
+			\ 'if foo',
+			\ '\ . bar',
+			\ '    echo "hi"',
+			\ 'endif',
+			\ ])
 
 		let g:vim_indent_cont = 8
 
 		call s:run_test([
-		 \ 'let x = [',
-		 \ '\ 1,',
-		 \ '\ 2,',
-		 \ '\ ]',
-		 \ 'echo "hi"',
-		 \ ], [
-		 \ 'let x = [',
-		 \ '        \ 1,',
-		 \ '        \ 2,',
-		 \ '        \ ]',
-		 \ 'echo "hi"',
-		 \ ])
+			\ 'let x = [',
+			\ '\ 1,',
+			\ '\ 2,',
+			\ '\ ]',
+			\ 'echo "hi"',
+			\ ], [
+			\ 'let x = [',
+			\ '        \ 1,',
+			\ '        \ 2,',
+			\ '        \ ]',
+			\ 'echo "hi"',
+			\ ])
 
 		let g:vim_indent_cont = 2
 
 		if !has('nvim')
 			call s:run_test([
-			 \ 'if v:true',
-			 \ 'var lines =<< trim END',
-			 \ 'text text text',
-			 \ '   text text text',
-			 \ 'text text text',
-			 \ '       text text',
-			 \ '   text text text',
-			 \ '         text text text',
-			 \ 'END',
-			 \ 'echo 123',
-			 \ 'else',
-			 \ 'echo 456',
-			 \ 'endif',
-			 \ ], [
-			 \ 'if v:true',
-			 \ '    var lines =<< trim END',
-			 \ 'text text text',
-			 \ '   text text text',
-			 \ 'text text text',
-			 \ '       text text',
-			 \ '   text text text',
-			 \ '         text text text',
-			 \ 'END',
-			 \ '    echo 123',
-			 \ 'else',
-			 \ '    echo 456',
-			 \ 'endif',
-			 \ ])
+				\ 'if v:true',
+				\ 'var lines =<< trim END',
+				\ 'text text text',
+				\ '   text text text',
+				\ 'text text text',
+				\ '       text text',
+				\ '   text text text',
+				\ '         text text text',
+				\ 'END',
+				\ 'echo 123',
+				\ 'else',
+				\ 'echo 456',
+				\ 'endif',
+				\ ], [
+				\ 'if v:true',
+				\ '    var lines =<< trim END',
+				\ 'text text text',
+				\ '   text text text',
+				\ 'text text text',
+				\ '       text text',
+				\ '   text text text',
+				\ '         text text text',
+				\ 'END',
+				\ '    echo 123',
+				\ 'else',
+				\ '    echo 456',
+				\ 'endif',
+				\ ])
 		endif
 
 		call s:run_test([
-		 \ 'for n in range(1, 8)',
-		 \ 'call popup_create(" ", {',
-		 \ '\ "highlight": "aaa",',
-		 \ '\ "pos": "botleft",',
-		 \ '\ "line": 1,',
-		 \ '\ "col": 1,',
-		 \ '\ })',
-		 \ 'endfor',
-		 \ ], [
-		 \ 'for n in range(1, 8)',
-		 \ '    call popup_create(" ", {',
-		 \ '      \ "highlight": "aaa",',
-		 \ '      \ "pos": "botleft",',
-		 \ '      \ "line": 1,',
-		 \ '      \ "col": 1,',
-		 \ '      \ })',
-		 \ 'endfor',
-		 \ ])
+			\ 'for n in range(1, 8)',
+			\ 'call popup_create(" ", {',
+			\ '\ "highlight": "aaa",',
+			\ '\ "pos": "botleft",',
+			\ '\ "line": 1,',
+			\ '\ "col": 1,',
+			\ '\ })',
+			\ 'endfor',
+			\ ], [
+			\ 'for n in range(1, 8)',
+			\ '    call popup_create(" ", {',
+			\ '      \ "highlight": "aaa",',
+			\ '      \ "pos": "botleft",',
+			\ '      \ "line": 1,',
+			\ '      \ "col": 1,',
+			\ '      \ })',
+			\ 'endfor',
+			\ ])
 
 		call s:run_test([
-		 \ 'augroup! xxx',
-		 \ 'echo 12',
-		 \ ], [
-		 \ 'augroup! xxx',
-		 \ 'echo 12',
-		 \ ])
+			\ 'augroup! xxx',
+			\ 'echo 12',
+			\ ], [
+			\ 'augroup! xxx',
+			\ 'echo 12',
+			\ ])
 
 		call s:run_test([
-		 \ 'if 1',
-		 \ 'echo 12',
-		 \ 'endif',
-		 \ ], [
-		 \ 'if 1',
-		 \ '    echo 12',
-		 \ 'endif',
-		 \ ])
+			\ 'if 1',
+			\ 'echo 12',
+			\ 'endif',
+			\ ], [
+			\ 'if 1',
+			\ '    echo 12',
+			\ 'endif',
+			\ ])
 
 		call s:run_test([
-		 \ 'try',
-		 \ 'echo 12',
-		 \ 'catch',
-		 \ 'echo 12',
-		 \ 'finally',
-		 \ 'echo 12',
-		 \ 'endtry',
-		 \ 'try',
-		 \ 'catch',
-		 \ 'finally',
-		 \ 'endtry',
-		 \ ], [
-		 \ 'try',
-		 \ '    echo 12',
-		 \ 'catch',
-		 \ '    echo 12',
-		 \ 'finally',
-		 \ '    echo 12',
-		 \ 'endtry',
-		 \ 'try',
-		 \ 'catch',
-		 \ 'finally',
-		 \ 'endtry',
-		 \ ])
+			\ 'try',
+			\ 'echo 12',
+			\ 'catch',
+			\ 'echo 12',
+			\ 'finally',
+			\ 'echo 12',
+			\ 'endtry',
+			\ 'try',
+			\ 'catch',
+			\ 'finally',
+			\ 'endtry',
+			\ ], [
+			\ 'try',
+			\ '    echo 12',
+			\ 'catch',
+			\ '    echo 12',
+			\ 'finally',
+			\ '    echo 12',
+			\ 'endtry',
+			\ 'try',
+			\ 'catch',
+			\ 'finally',
+			\ 'endtry',
+			\ ])
 
 		call s:run_test([
-		 \ 'if 1',
-		 \ 'echo 12',
-		 \ 'elseif 2',
-		 \ 'echo 12',
-		 \ 'else',
-		 \ 'echo 12',
-		 \ 'endif',
-		 \ 'if 1',
-		 \ 'elseif 2',
-		 \ 'else',
-		 \ 'endif',
-		 \ ], [
-		 \ 'if 1',
-		 \ '    echo 12',
-		 \ 'elseif 2',
-		 \ '    echo 12',
-		 \ 'else',
-		 \ '    echo 12',
-		 \ 'endif',
-		 \ 'if 1',
-		 \ 'elseif 2',
-		 \ 'else',
-		 \ 'endif',
-		 \ ])
+			\ 'if 1',
+			\ 'echo 12',
+			\ 'elseif 2',
+			\ 'echo 12',
+			\ 'else',
+			\ 'echo 12',
+			\ 'if 1',
+			\ 'elseif 2',
+			\ 'else',
+			\ 'endif',
+			\ 'endif',
+			\ ], [
+			\ 'if 1',
+			\ '    echo 12',
+			\ 'elseif 2',
+			\ '    echo 12',
+			\ 'else',
+			\ '    echo 12',
+			\ '    if 1',
+			\ '    elseif 2',
+			\ '    else',
+			\ '    endif',
+			\ 'endif',
+			\ ])
 
 		call s:run_test([
-		 \ 'while 1',
-		 \ 'echo 12',
-		 \ 'endwhile',
-		 \ 'while 1',
-		 \ 'endwhile',
-		 \ ], [
-		 \ 'while 1',
-		 \ '    echo 12',
-		 \ 'endwhile',
-		 \ 'while 1',
-		 \ 'endwhile',
-		 \ ])
+			\ 'while 1',
+			\ 'echo 12',
+			\ 'endwhile',
+			\ 'while 1',
+			\ 'endwhile',
+			\ ], [
+			\ 'while 1',
+			\ '    echo 12',
+			\ 'endwhile',
+			\ 'while 1',
+			\ 'endwhile',
+			\ ])
 
 		call s:run_test([
-		 \ 'for i in [1,2,3]',
-		 \ 'echo 12',
-		 \ 'endfor',
-		 \ 'for i in [1,2,3]',
-		 \ 'endfor',
-		 \ ], [
-		 \ 'for i in [1,2,3]',
-		 \ '    echo 12',
-		 \ 'endfor',
-		 \ 'for i in [1,2,3]',
-		 \ 'endfor',
-		 \ ])
+			\ 'for i in [1,2,3]',
+			\ 'echo 12',
+			\ 'endfor',
+			\ 'for i in [1,2,3]',
+			\ 'endfor',
+			\ ], [
+			\ 'for i in [1,2,3]',
+			\ '    echo 12',
+			\ 'endfor',
+			\ 'for i in [1,2,3]',
+			\ 'endfor',
+			\ ])
 
 		call s:run_test([
-		 \ 'augroup xxx',
-		 \ 'autocmd!',
-		 \ 'autocmd FileType vim',
-		 \ '\ : if 1',
-		 \ '\ |     echo 12',
-		 \ '\ | else',
-		 \ '\ |     echo 12',
-		 \ '\ | endif',
-		 \ 'augroup END',
-		 \ 'augroup xxx',
-		 \ 'augroup END',
-		 \ ], [
-		 \ 'augroup xxx',
-		 \ '    autocmd!',
-		 \ '    autocmd FileType vim',
-		 \ '      \ : if 1',
-		 \ '      \ |     echo 12',
-		 \ '      \ | else',
-		 \ '      \ |     echo 12',
-		 \ '      \ | endif',
-		 \ 'augroup END',
-		 \ 'augroup xxx',
-		 \ 'augroup END',
-		 \ ])
+			\ 'augroup xxx',
+			\ 'autocmd!',
+			\ 'autocmd FileType vim',
+			\ '\ : if 1',
+			\ '\ |     echo 12',
+			\ '\ | else',
+			\ '\ |     echo 12',
+			\ '\ | endif',
+			\ 'augroup END',
+			\ 'augroup xxx',
+			\ 'augroup END',
+			\ ], [
+			\ 'augroup xxx',
+			\ '    autocmd!',
+			\ '    autocmd FileType vim',
+			\ '      \ : if 1',
+			\ '      \ |     echo 12',
+			\ '      \ | else',
+			\ '      \ |     echo 12',
+			\ '      \ | endif',
+			\ 'augroup END',
+			\ 'augroup xxx',
+			\ 'augroup END',
+			\ ])
 
 		if s:ENABLE_VIM9
 			call s:run_test([
-			 \ 'def outter()',
-			 \ 'echo 12',
-			 \ 'def inner()',
-			 \ 'echo 34',
-			 \ 'enddef',
-			 \ 'enddef',
-			 \ ], [
-			 \ 'def outter()',
-			 \ '    echo 12',
-			 \ '    def inner()',
-			 \ '        echo 34',
-			 \ '    enddef',
-			 \ 'enddef',
-			 \ ])
+				\ 'def outter()',
+				\ 'echo 12',
+				\ 'def inner()',
+				\ 'echo 34',
+				\ 'enddef',
+				\ 'enddef',
+				\ ], [
+				\ 'def outter()',
+				\ '    echo 12',
+				\ '    def inner()',
+				\ '        echo 34',
+				\ '    enddef',
+				\ 'enddef',
+				\ ])
 
 			call s:run_test([
-			 \ 'var total = m',
-			 \ '+ n',
-			 \ 'echo 123',
-			 \ ], [
-			 \ 'var total = m',
-			 \ '  + n',
-			 \ 'echo 123',
-			 \ ])
+				\ 'var total = m',
+				\ '+ n',
+				\ 'echo 123',
+				\ ], [
+				\ 'var total = m',
+				\ '  + n',
+				\ 'echo 123',
+				\ ])
 
 			call s:run_test([
-			 \ 'x',
-			 \ '->method()',
-			 \ '->method()',
-			 \ '->method()',
-			 \ '->method()',
-			 \ 'F()',
-			 \ ], [
-			 \ 'x',
-			 \ '  ->method()',
-			 \ '  ->method()',
-			 \ '  ->method()',
-			 \ '  ->method()',
-			 \ 'F()',
-			 \ ])
+				\ 'x',
+				\ '->method()',
+				\ '->method()',
+				\ '->method()',
+				\ '->method()',
+				\ 'F()',
+				\ ], [
+				\ 'x',
+				\ '  ->method()',
+				\ '  ->method()',
+				\ '  ->method()',
+				\ '  ->method()',
+				\ 'F()',
+				\ ])
 
 			call s:run_test([
-			 \ 'if v:true',
-			 \ 'let a = p',
-			 \ '? 1',
-			 \ ': 2',
-			 \ 'echo 234',
-			 \ ':2',
-			 \ 'echo 234',
-			 \ 'endif',
-			 \ ], [
-			 \ 'if v:true',
-			 \ '    let a = p',
-			 \ '      ? 1',
-			 \ '      : 2',
-			 \ '    echo 234',
-			 \ '    :2',
-			 \ '    echo 234',
-			 \ 'endif',
-			 \ ])
+				\ 'if v:true',
+				\ 'let a = p',
+				\ '? 1',
+				\ ': 2',
+				\ 'echo 234',
+				\ ':2',
+				\ 'echo 234',
+				\ 'endif',
+				\ ], [
+				\ 'if v:true',
+				\ '    let a = p',
+				\ '      ? 1',
+				\ '      : 2',
+				\ '    echo 234',
+				\ '    :2',
+				\ '    echo 234',
+				\ 'endif',
+				\ ])
 
 			call s:run_test([
-			 \ '{',
-			 \ 'echo 234',
-			 \ '}',
-			 \ ], [
-			 \ '{',
-			 \ '    echo 234',
-			 \ '}',
-			 \ ])
+				\ '{',
+				\ 'echo 234',
+				\ '}',
+				\ ], [
+				\ '{',
+				\ '    echo 234',
+				\ '}',
+				\ ])
 
 			call s:run_test([
-			 \ 'let a = p',
-			 \ '? 1',
-			 \ ': 2',
-			 \ 'echo 234',
-			 \ ':2',
-			 \ ], [
-			 \ 'let a = p',
-			 \ '  ? 1',
-			 \ '  : 2',
-			 \ 'echo 234',
-			 \ ':2',
-			 \ ])
+				\ 'let a = p',
+				\ '? 1',
+				\ ': 2',
+				\ 'echo 234',
+				\ ':2',
+				\ ], [
+				\ 'let a = p',
+				\ '  ? 1',
+				\ '  : 2',
+				\ 'echo 234',
+				\ ':2',
+				\ ])
 
 			"call s:run_test([
 			" \ 'filter(list, (k, v) =>',
@@ -725,10 +727,10 @@ function! vimscript_indentexpr#run_tests() abort
 				echohl Error
 				if 3 == len(xs)
 					let lines += [
-					 \ xs[0],
-					 \ '  Expected ' .. xs[1],
-					 \ '  but got  ' .. xs[2],
-					 \ ]
+						\ xs[0],
+						\ '  Expected ' .. xs[1],
+						\ '  but got  ' .. xs[2],
+						\ ]
 					echo xs[0]
 					echo '  Expected ' .. xs[1]
 					echo '  but got  ' .. xs[2]
