@@ -8,3 +8,7 @@ endif
 let b:did_indent = 1
 
 setlocal indentexpr=vimscript_indentexpr#exec()
+setlocal indentkeys+==end,=},=else,=cat,=finall,=END,0\\,0=\"\\\ 
+setlocal indentkeys-=0#
+
+let b:undo_indent = 'setl indentkeys< indentexpr<'
