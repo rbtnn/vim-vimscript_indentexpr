@@ -10,6 +10,7 @@ let s:TYPE_COMMENT = 'TYPE_COMMENT'
 let s:TYPE_CONTINUOUS = 'TYPE_CONTINUOUS'
 let s:TYPE_QUESTION = 'TYPE_QUESTION'
 let s:TYPE_COLLON = 'TYPE_COLLON'
+let s:TYPE_FINAL = 'TYPE_FINAL'
 let s:TYPE_IF = 'TYPE_IF'
 let s:TYPE_ELSEIF = 'TYPE_ELSEIF'
 let s:TYPE_ELSE = 'TYPE_ELSE'
@@ -167,6 +168,8 @@ function! vimscript_indentexpr#get_type(line, lnum) abort
 		let t = s:TYPE_TRY
 	elseif text =~# '^\<cat\%[ch\]\>'
 		let t = s:TYPE_CATCH
+	elseif s:ENABLE_VIM9 && (text =~# '^\<final\>')
+		let t = s:TYPE_FINAL
 	elseif text =~# '^\<fina\%[lly\]\>'
 		let t = s:TYPE_FINALLY
 	elseif text =~# '^\<endt\%[ry\]\>'
@@ -230,6 +233,9 @@ function! vimscript_indentexpr#run_tests() abort
 		call assert_equal(vimscript_indentexpr#get_type('   endtry', -1), s:TYPE_ENDTRY)
 
 		if s:ENABLE_VIM9
+			call assert_equal(vimscript_indentexpr#get_type('   final', -1), s:TYPE_FINAL)
+			call assert_equal(vimscript_indentexpr#get_type('   fina', -1), s:TYPE_FINALLY)
+			call assert_equal(vimscript_indentexpr#get_type('   finall', -1), s:TYPE_FINALLY)
 			call assert_equal(vimscript_indentexpr#get_type('   def', -1), s:TYPE_DEF)
 			call assert_equal(vimscript_indentexpr#get_type('   enddef', -1), s:TYPE_ENDDEF)
 			call assert_equal(vimscript_indentexpr#get_type('   #en', -1), s:TYPE_COMMENT)
@@ -551,6 +557,46 @@ function! vimscript_indentexpr#run_tests() abort
 				\ '  : 2',
 				\ 'echo 234',
 				\ ':2',
+				\ ])
+
+			call s:run_test([
+				\ 'def Func(): number',
+				\ 'try',
+				\ 'final foo = 10',
+				\ 'fina',
+				\ 'final foo = 10',
+				\ 'endtry',
+				\ 'try',
+				\ 'final foo = 10',
+				\ 'finall',
+				\ 'final foo = 10',
+				\ 'endtry',
+				\ 'try',
+				\ 'final foo = 10',
+				\ 'finally',
+				\ 'final foo = 10',
+				\ 'endtry',
+				\ 'return foo',
+				\ 'enddef',
+				\ ], [
+				\ 'def Func(): number',
+				\ '    try',
+				\ '        final foo = 10',
+				\ '    fina',
+				\ '        final foo = 10',
+				\ '    endtry',
+				\ '    try',
+				\ '        final foo = 10',
+				\ '    finall',
+				\ '        final foo = 10',
+				\ '    endtry',
+				\ '    try',
+				\ '        final foo = 10',
+				\ '    finally',
+				\ '        final foo = 10',
+				\ '    endtry',
+				\ '    return foo',
+				\ 'enddef',
 				\ ])
 
 			"call s:run_test([
