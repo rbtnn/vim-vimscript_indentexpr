@@ -546,6 +546,24 @@ function! vimscript_indentexpr#run_tests() abort
 				\ ])
 
 			call s:run_test([
+				\ 'let ruby =<< RUBY',
+				\ '    require("csv")',
+				\ 'RUBY',
+				\ '',
+				\ 'let c =<< C',
+				\ '    #include <stdio.h>',
+				\ 'C',
+				\ ], [
+				\ 'let ruby =<< RUBY',
+				\ '    require("csv")',
+				\ 'RUBY',
+				\ '',
+				\ 'let c =<< C',
+				\ '    #include <stdio.h>',
+				\ 'C',
+				\ ])
+
+			call s:run_test([
 				\ 'let a = p',
 				\ '? 1',
 				\ ': 2',
