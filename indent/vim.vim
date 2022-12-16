@@ -1,6 +1,6 @@
 " for overrides $VIMRUNTIME/indent/vim.vim
 
-if &indentexpr != 'GetVimIndent()'
+if -1 == index(['GetVimIndent()', 'vimindent.Expr()'], &indentexpr)
 	if exists("b:did_indent")
 		finish
 	endif

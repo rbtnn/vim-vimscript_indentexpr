@@ -31,6 +31,8 @@ let s:TYPE_DEF = 'TYPE_DEF'
 let s:TYPE_ENDDEF = 'TYPE_ENDDEF'
 let s:TYPE_BLOCK = 'TYPE_BLOCK'
 let s:TYPE_ENDBLOCK = 'TYPE_ENDBLOCK'
+let s:TYPE_CLASS = 'TYPE_CLASS'
+let s:TYPE_ENDCLASS = 'TYPE_ENDCLASS'
 
 let s:CONTINUOUS_LIST = [
 	\ s:TYPE_QUESTION,
@@ -51,6 +53,7 @@ let s:BEGIN_LIST = [
 	\ s:TYPE_ELSE,
 	\ s:TYPE_ELSEIF,
 	\ s:TYPE_BLOCK,
+	\ s:TYPE_CLASS,
 	\ ]
 
 let s:END_LIST = [
@@ -66,6 +69,7 @@ let s:END_LIST = [
 	\ s:TYPE_ELSE,
 	\ s:TYPE_ELSEIF,
 	\ s:TYPE_ENDBLOCK,
+	\ s:TYPE_ENDCLASS,
 	\ ]
 
 function! vimscript_indentexpr#exec() abort
@@ -178,6 +182,10 @@ function! vimscript_indentexpr#get_type(line, lnum) abort
 		let t = s:TYPE_ENDDEF
 	elseif s:ENABLE_VIM9 && (text =~# '^\<def\>')
 		let t = s:TYPE_DEF
+	elseif s:ENABLE_VIM9 && (text =~# '^\<class\>')
+		let t = s:TYPE_CLASS
+	elseif s:ENABLE_VIM9 && (text =~# '^\<endclass\>')
+		let t = s:TYPE_ENDCLASS
 	endif
 	return t
 endfunction
@@ -615,6 +623,22 @@ function! vimscript_indentexpr#run_tests() abort
 				\ '    endtry',
 				\ '    return foo',
 				\ 'enddef',
+				\ ])
+
+			call s:run_test([
+				\ 'class Hoge',
+				\ 'this.x: number',
+				\ 'def new()',
+				\ 'var s = "2"',
+				\ 'enddef',
+				\ 'endclass',
+				\ ], [
+				\ 'class Hoge',
+				\ '    this.x: number',
+				\ '    def new()',
+				\ '        var s = "2"',
+				\ '    enddef',
+				\ 'endclass',
 				\ ])
 
 			"call s:run_test([
